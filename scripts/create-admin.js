@@ -33,7 +33,9 @@ rl.question('Enter Admin Email: ', (email) => {
         email: email,
         password: password,
       });
+      await getAuth().setCustomUserClaims(userRecord.uid, { admin: true });
       console.log(`\nSuccess! Admin account created.`);
+      console.log(`Admin claim set: true`);
       console.log(`UID: ${userRecord.uid}`);
       console.log(`Email: ${userRecord.email}`);
     } catch (error) {
