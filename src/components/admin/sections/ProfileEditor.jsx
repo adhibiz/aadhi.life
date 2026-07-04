@@ -5,7 +5,7 @@ import { db } from '../../../firebase/config';
 import { AdminCard } from '../AdminCard';
 import { 
   Camera, FileText, Trash2, Loader2, Link, User, Sparkles, 
-  BookOpen, Briefcase, Mail, Phone, MapPin, Info
+  BookOpen, Briefcase, Mail, Phone, MapPin, Info, Monitor, ToggleLeft, ToggleRight, Clock
 } from 'lucide-react';
 import { FaGithub, FaLinkedin, FaInstagram } from 'react-icons/fa';
 import { uploadFile, deleteFile } from '../../../cloudinary/upload';
@@ -21,8 +21,17 @@ const availableForOptions = [
 
 export const ProfileEditor = ({ showToast }) => {
   const { document: profile, loading } = useDocument('site_meta', 'profile');
+  const { document: loadingDoc } = useDocument('site_meta', 'loading_screen');
   const [formData, setFormData] = useState({});
+  const [loadingForm, setLoadingForm] = useState({
+    enabled: true,
+    title: '',
+    tagline: '',
+    domain_suffix: '.life',
+    duration_seconds: 4,
+  });
   const [isSaving, setIsSaving] = useState(false);
+  const [isSavingLoading, setIsSavingLoading] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isUploadingResume, setIsUploadingResume] = useState(false);
   const [photoProgress, setPhotoProgress] = useState(0);
@@ -37,6 +46,12 @@ export const ProfileEditor = ({ showToast }) => {
       setFormData(profile);
     }
   }, [profile]);
+
+  useEffect(() => {
+    if (loadingDoc) {
+      setLoadingForm(prev => ({ ...prev, ...loadingDoc }));
+    }
+  }, [loadingDoc]);
 
   if (loading) {
     return (
@@ -173,11 +188,26 @@ export const ProfileEditor = ({ showToast }) => {
     }
   };
 
+  const handleSaveLoadingScreen = async () => {
+    setIsSavingLoading(true);
+    try {
+      const docRef = doc(db, 'site_meta', 'loading_screen');
+      await setDoc(docRef, loadingForm, { merge: true });
+      showToast('Loading screen settings saved!');
+    } catch (error) {
+      console.error(error);
+      showToast(`Failed to save: ${error.message}`, 'error');
+    } finally {
+      setIsSavingLoading(false);
+    }
+  };
+
   const tabs = [
     { id: 'basic', label: 'Basic Info & Photo', icon: <User size={16} /> },
     { id: 'hero', label: 'Hero Header Settings', icon: <Sparkles size={16} /> },
     { id: 'about', label: 'About & Journey', icon: <BookOpen size={16} /> },
-    { id: 'resume', label: 'Resume & Career', icon: <Briefcase size={16} /> }
+    { id: 'resume', label: 'Resume & Career', icon: <Briefcase size={16} /> },
+    { id: 'loading', label: 'Loading Screen', icon: <Monitor size={16} /> }
   ];
 
   return (
@@ -777,6 +807,145 @@ export const ProfileEditor = ({ showToast }) => {
                 </div>
               )}
             </AdminCard>
+          </div>
+        )}
+
+        {/* Tab 5: Loading Screen */}
+        {activeSubTab === 'loading' && (
+          <div className="space-y-6">
+
+            {/* Header row with its own save button */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 bg-bg-surface border border-line/50 rounded-2xl">
+              <div>
+                <h3 className="font-display font-bold text-ink text-lg leading-none">Intro Loading Screen</h3>
+                <p className="text-xs text-ink-muted mt-1.5">Controls the cinematic splash that plays on the user's first visit. Changes take effect on reload.</p>
+              </div>
+              <button
+                onClick={handleSaveLoadingScreen}
+                disabled={isSavingLoading}
+                className="bg-accent text-bg px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-accent-light transition-colors disabled:opacity-50 flex items-center gap-2 shrink-0 self-start sm:self-auto"
+              >
+                {isSavingLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save Loading Screen'}
+              </button>
+            </div>
+
+            {/* Enable / Disable toggle */}
+            <AdminCard title="Visibility">
+              <button
+                type="button"
+                onClick={() => setLoadingForm(prev => ({ ...prev, enabled: !prev.enabled }))}
+                className={`flex items-center gap-3 px-5 py-3.5 rounded-xl border transition-all text-sm font-semibold ${
+                  loadingForm.enabled
+                    ? 'bg-accent/10 border-accent/30 text-accent'
+                    : 'bg-bg-surface border-line text-ink-muted hover:border-accent/20'
+                }`}
+              >
+                {loadingForm.enabled
+                  ? <ToggleRight size={22} className="text-accent" />
+                  : <ToggleLeft size={22} />}
+                {loadingForm.enabled ? 'Loading screen is ENABLED' : 'Loading screen is DISABLED'}
+              </button>
+              <p className="text-xs text-ink-muted mt-3">When disabled, visitors go straight to the site without seeing the intro animation.</p>
+            </AdminCard>
+
+            {/* Text content */}
+            <AdminCard title="Content & Text">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-ink-muted uppercase tracking-wider">Display Name / Title</label>
+                  <input
+                    type="text"
+                    value={loadingForm.title}
+                    onChange={e => setLoadingForm(prev => ({ ...prev, title: e.target.value }))}
+                    placeholder={profile?.name?.toLowerCase() || 'aadhi'}
+                    className="w-full bg-bg border border-line rounded-xl px-4 py-3 text-sm text-ink placeholder-ink-muted/50 focus:outline-none focus:border-accent/50 transition-colors"
+                  />
+                  <p className="text-[11px] text-ink-muted">Typed out character by character on screen. Defaults to your profile name.</p>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-ink-muted uppercase tracking-wider">Domain Suffix</label>
+                  <input
+                    type="text"
+                    value={loadingForm.domain_suffix}
+                    onChange={e => setLoadingForm(prev => ({ ...prev, domain_suffix: e.target.value }))}
+                    placeholder=".life"
+                    className="w-full bg-bg border border-line rounded-xl px-4 py-3 text-sm text-ink placeholder-ink-muted/50 focus:outline-none focus:border-accent/50 transition-colors"
+                  />
+                  <p className="text-[11px] text-ink-muted">Appended to the title (e.g. <code>.life</code> → <em>aadhi.life</em>).</p>
+                </div>
+                <div className="sm:col-span-2 space-y-1.5">
+                  <label className="block text-xs font-bold text-ink-muted uppercase tracking-wider">Tagline / Subtitle</label>
+                  <input
+                    type="text"
+                    value={loadingForm.tagline}
+                    onChange={e => setLoadingForm(prev => ({ ...prev, tagline: e.target.value }))}
+                    placeholder="Builder · Learner · Creator"
+                    className="w-full bg-bg border border-line rounded-xl px-4 py-3 text-sm text-ink placeholder-ink-muted/50 focus:outline-none focus:border-accent/50 transition-colors"
+                  />
+                  <p className="text-[11px] text-ink-muted">Short subtitle shown beneath the name after typing finishes.</p>
+                </div>
+              </div>
+            </AdminCard>
+
+            {/* Duration */}
+            <AdminCard title="Duration">
+              <div className="flex items-center gap-4">
+                <Clock size={18} className="text-ink-muted shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-ink-muted uppercase tracking-wider">Screen Duration</label>
+                    <span className="text-sm font-mono font-bold text-accent">{loadingForm.duration_seconds}s</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={2}
+                    max={10}
+                    step={0.5}
+                    value={loadingForm.duration_seconds}
+                    onChange={e => setLoadingForm(prev => ({ ...prev, duration_seconds: parseFloat(e.target.value) }))}
+                    className="w-full accent-accent cursor-pointer"
+                  />
+                  <div className="flex justify-between text-[11px] text-ink-muted">
+                    <span>2s (fast)</span>
+                    <span>10s (cinematic)</span>
+                  </div>
+                </div>
+              </div>
+              <p className="text-xs text-ink-muted mt-3">The loading screen auto-dismisses after this many seconds. The typewriter + particles play within this window.</p>
+            </AdminCard>
+
+            {/* Live mini-preview */}
+            <AdminCard title="Preview (miniature)">
+              <div className="relative h-52 rounded-2xl overflow-hidden border border-line/50 bg-[#0a0a0f] flex flex-col items-center justify-center gap-4">
+                {/* Ambient blobs */}
+                <div className="absolute top-0 left-0 w-48 h-48 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(99,102,241,0.18) 0%, transparent 70%)' }} />
+                <div className="absolute bottom-0 right-0 w-40 h-40 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(168,85,247,0.14) 0%, transparent 70%)' }} />
+                {/* Rings */}
+                <div className="relative w-12 h-12 flex items-center justify-center">
+                  <div className="absolute inset-0 rounded-full border border-dashed border-indigo-500/30 animate-spin" style={{ animationDuration: '8s' }} />
+                  <div className="absolute w-9 h-9 rounded-full border border-indigo-500/50 animate-spin" style={{ animationDuration: '5s', animationDirection: 'reverse' }} />
+                  <div className="w-7 h-7 rounded-full bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center text-indigo-400 font-black text-sm">
+                    {(loadingForm.title || profile?.name || 'A').charAt(0).toUpperCase()}
+                  </div>
+                </div>
+                {/* Title */}
+                <div className="text-center">
+                  <p className="font-display font-black text-white text-lg leading-none">
+                    {loadingForm.title || profile?.name?.toLowerCase() || 'aadhi'}
+                    <span style={{ color: '#6366f1' }}>{loadingForm.domain_suffix || '.life'}</span>
+                    <span className="text-indigo-400 ml-0.5 animate-pulse">|</span>
+                  </p>
+                  <p className="text-[10px] mt-1.5 uppercase tracking-widest font-mono" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                    {loadingForm.tagline || 'Builder · Learner · Creator'}
+                  </p>
+                </div>
+                {/* Mini progress bar */}
+                <div className="w-28 h-[2px] rounded-full bg-white/10 overflow-hidden">
+                  <div className="h-full rounded-full w-2/3" style={{ background: 'linear-gradient(90deg,#6366f1,#a855f7)' }} />
+                </div>
+              </div>
+            </AdminCard>
+
           </div>
         )}
 
