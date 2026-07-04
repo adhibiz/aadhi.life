@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { motion, useScroll, useSpring } from 'framer-motion';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import { ThemeProvider } from './context/ThemeContext';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
@@ -70,6 +71,7 @@ function App() {
   <Router>
   <AppContent />
   </Router>
+  <SpeedInsights />
  </ThemeProvider>
  );
 }
