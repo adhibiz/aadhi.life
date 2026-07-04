@@ -74,6 +74,13 @@ export const LoadingScreen = ({ onComplete }) => {
   const typedText = `${displayName}${domainSuffix}`;
   const { displayed, done: typingDone } = useTypewriter(typedText, 70, 400);
 
+  // Split displayed text at the dot so we can animate it separately
+  const dotIdx    = typedText.indexOf('.');
+  const beforeDot = dotIdx >= 0 ? displayed.slice(0, dotIdx) : displayed;
+  const dotChar   = dotIdx >= 0 && displayed.length > dotIdx ? typedText[dotIdx] : '';
+  const afterDot  = dotIdx >= 0 && displayed.length > dotIdx + 1 ? displayed.slice(dotIdx + 1) : '';
+
+
   /* Show once per session */
   useEffect(() => {
     const hasVisited = sessionStorage.getItem('visited');
@@ -167,16 +174,44 @@ export const LoadingScreen = ({ onComplete }) => {
                 className="font-display font-black tracking-tight leading-none select-none"
                 style={{ fontSize: 'clamp(2rem, 6vw, 3.5rem)', letterSpacing: '-0.02em' }}
               >
-                <span className="text-ink">{displayed}</span>
-                {/* blinking cursor */}
-                <motion.span
-                  className="text-accent"
-                  animate={{ opacity: typingDone ? [1, 0, 1] : 1 }}
-                  transition={{ repeat: Infinity, duration: 0.8, ease: 'steps(1)' }}
-                >
-                  |
-                </motion.span>
+                {/* Name part before the dot */}
+                <span className="text-ink">{beforeDot}</span>
+
+                {/* The glowing dot — animates once typewriter reaches it */}
+                {dotChar && (
+                  <motion.span
+                    animate={{
+                      textShadow: [
+                        '0 0 0px rgba(99,102,241,0)',
+                        '0 0 10px rgba(99,102,241,1), 0 0 24px rgba(168,85,247,0.9), 0 0 44px rgba(99,102,241,0.55)',
+                        '0 0 6px rgba(99,102,241,0.5), 0 0 14px rgba(168,85,247,0.35)',
+                        '0 0 12px rgba(99,102,241,1), 0 0 30px rgba(168,85,247,1), 0 0 52px rgba(99,102,241,0.7)',
+                        '0 0 0px rgba(99,102,241,0)',
+                      ],
+                      scale: [1, 1.2, 1.05, 1.25, 1],
+                    }}
+                    transition={{ repeat: Infinity, duration: 2.2, ease: 'easeInOut' }}
+                    style={{ color: '#818cf8', display: 'inline-block', transformOrigin: 'center' }}
+                  >
+                    {dotChar}
+                  </motion.span>
+                )}
+
+                {/* Suffix after the dot — e.g. "life" */}
+                <span className="text-ink">{afterDot}</span>
+
+                {/* Blinking cursor — visible only while still typing */}
+                {!typingDone && (
+                  <motion.span
+                    className="text-accent"
+                    animate={{ opacity: [1, 0] }}
+                    transition={{ repeat: Infinity, duration: 0.6, ease: 'steps(1)' }}
+                  >
+                    |
+                  </motion.span>
+                )}
               </h1>
+
 
               {/* Tagline fades in once typing completes */}
               <AnimatePresence>
