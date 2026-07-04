@@ -8,7 +8,7 @@ service cloud.firestore {
     // Public reads for all content
     match /site_meta/{doc} { allow read: if true; allow write: if isAdmin(); }
     match /projects/{doc} { allow read: if true; allow write: if isAdmin(); }
-    match /blog_posts/{doc} { allow read: if resource.data.published == true; allow write: if isAdmin(); }
+    match /blog_posts/{doc} { allow read: if resource.data.published == true || isAdmin(); allow write: if isAdmin(); }
     match /skills/{doc} { allow read: if true; allow write: if isAdmin(); }
     match /timeline/{doc} { allow read: if true; allow write: if isAdmin(); }
     match /now_page/{doc} { allow read: if true; allow write: if isAdmin(); }
