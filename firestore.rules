@@ -1,31 +1,81 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // ── Helper: Admin = authenticated + custom claim ──────────────────────
     function isAdmin() {
       return request.auth != null && request.auth.token.admin == true;
     }
 
-    // Public reads for all content
-    match /site_meta/{doc} { allow read: if true; allow write: if isAdmin(); }
-    match /projects/{doc} { allow read: if true; allow write: if isAdmin(); }
-    match /blog_posts/{doc} { allow read: if resource.data.published == true || isAdmin(); allow write: if isAdmin(); }
-    match /skills/{doc} { allow read: if true; allow write: if isAdmin(); }
-    match /timeline/{doc} { allow read: if true; allow write: if isAdmin(); }
-    match /now_page/{doc} { allow read: if true; allow write: if isAdmin(); }
-    
-    // Guestbook: anyone can add (pending), only admin can approve/delete
+    // ─────────────────────────────────────────────────────────────────────
+    // PUBLIC CONTENT (read-only for visitors, write-only for admin)
+    // ─────────────────────────────────────────────────────────────────────
+    match /site_meta/{doc} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /projects/{doc} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /skills/{doc} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /timeline/{doc} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /now_page/{doc} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // BLOG POSTS
+    //   - Public can read published posts only
+    //   - Admin can read all (including drafts) and write
+    // ─────────────────────────────────────────────────────────────────────
+    match /blog_posts/{doc} {
+      allow read: if resource.data.published == true || isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // NOTIFICATIONS (admin-only)
+    // ─────────────────────────────────────────────────────────────────────
+    match /notifications/{doc} {
+      allow read, write: if isAdmin();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // GUESTBOOK
+    //   - Public can read approved entries
+    //   - Anyone can CREATE if message passes validation + approved=false
+    //   - Only ADMIN can approve, update, or delete entries
+    // ─────────────────────────────────────────────────────────────────────
     match /guestbook/{doc} {
-      allow read: if resource.data.approved == true || request.auth != null;
-      allow create: if request.resource.data.approved == false 
-                    && request.resource.data.name is string 
+      allow read: if resource.data.approved == true || isAdmin();
+
+      allow create: if request.resource.data.approved == false
+                    && request.resource.data.name is string
                     && request.resource.data.message is string
                     && request.resource.data.name.size() > 0
                     && request.resource.data.name.size() <= 80
                     && request.resource.data.message.size() > 0
                     && request.resource.data.message.size() <= 1000;
-      allow update, delete: if request.auth != null;
+
+      // FIXED: was `request.auth != null` (any logged-in user) — now admin only
+      allow update, delete: if isAdmin();
     }
 
+    // ─────────────────────────────────────────────────────────────────────
+    // CATCH-ALL: deny everything else
+    // ─────────────────────────────────────────────────────────────────────
     match /{document=**} {
       allow read, write: if false;
     }

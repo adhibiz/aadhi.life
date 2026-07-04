@@ -1,4 +1,9 @@
-# Logs
+# ── Build outputs ─────────────────────────────────────────────────────────
+node_modules
+dist
+dist-ssr
+
+# ── Logs ──────────────────────────────────────────────────────────────────
 logs
 *.log
 npm-debug.log*
@@ -7,14 +12,24 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# ── Environment variables ─────────────────────────────────────────────────
 .env
-scripts/serviceAccountKey.json
+.env.*
+!.env.example
+*.local
 
-# Editor directories and files
+# ── Firebase / Google service account keys ────────────────────────────────
+scripts/serviceAccountKey.json
+**/serviceAccountKey.json
+*.pem
+*.p12
+*.key
+google-credentials.json
+
+# ── Admin / seeding scripts — local only, never commit ────────────────────
+scripts/
+
+# ── Editor & OS files ─────────────────────────────────────────────────────
 .vscode/*
 !.vscode/extensions.json
 .idea
@@ -24,5 +39,7 @@ scripts/serviceAccountKey.json
 *.njsproj
 *.sln
 *.sw?
+Thumbs.db
 
+# ── Vercel ────────────────────────────────────────────────────────────────
 .vercel
