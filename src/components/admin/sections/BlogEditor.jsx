@@ -9,7 +9,7 @@ import { deleteFile } from '../../../cloudinary/upload';
 import { 
   Bold, Italic, Underline, List, Heading, Code, Quote, Link as LinkIcon, Image as ImageIcon, 
   Maximize2, Minimize2, Sparkles, TrendingUp, Eye, Settings, MessageSquare, Heart, Share2, 
-  RotateCcw, History, User, Search, Trash2, Pin, Star, Check, AlertCircle, ArrowLeft, BookOpen, Send, Loader2, Edit2, Plus, X, EyeOff, LayoutGrid, Calendar
+  RotateCcw, History, User, Search, Trash2, Pin, Star, Check, AlertCircle, ArrowLeft, BookOpen, Send, Loader2, Edit2, Plus, X, EyeOff, LayoutGrid, Calendar, Sliders, Type
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { marked } from 'marked';
@@ -57,7 +57,7 @@ export const BlogEditor = ({ showToast }) => {
   const [autoSaveStatus, setAutoSaveStatus] = useState('Saved');
   
   // Custom CMS Editor States
-  const [editorMode, setEditorMode] = useState('split'); // 'write' | 'preview' | 'split'
+  const [editorTab, setEditorTab] = useState('write'); // 'write' | 'settings' | 'preview'
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showVersionHistory, setShowVersionHistory] = useState(false);
   const [searchComment, setSearchComment] = useState('');
@@ -116,6 +116,7 @@ export const BlogEditor = ({ showToast }) => {
       published_date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     });
     setIsEditing(true);
+    setEditorTab('write');
     setIsDirty(false);
     setAutoSaveStatus('Saved');
   };
@@ -130,16 +131,28 @@ export const BlogEditor = ({ showToast }) => {
       ...post
     });
     setIsEditing(true);
+    setEditorTab('write');
     setIsDirty(false);
     setAutoSaveStatus('Saved');
   };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
+    
+    // Automatically generate slug from title if slug was empty or matches old title slug
+    if (name === 'title') {
+      const generatedSlug = value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      setFormData(prev => ({
+        ...prev,
+        title: value,
+        slug: prev.slug === prev.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') ? generatedSlug : prev.slug
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: type === 'checkbox' ? checked : value
+      }));
+    }
     setIsDirty(true);
     setAutoSaveStatus('Unsaved Changes');
   };
@@ -440,34 +453,35 @@ export const BlogEditor = ({ showToast }) => {
           />
         </>
       ) : (
-        /* WORKSPACE COMPOSER PANEL */
+        /* PREMIUM WORKSPACE COMPOSER PANEL */
         <div className={`space-y-6 ${isFullscreen ? 'fixed inset-0 z-50 bg-bg p-6 overflow-y-auto' : ''}`}>
           
-          {/* STICKY EDITOR HEADER */}
-          <div className="sticky top-0 bg-bg/90 backdrop-blur-md z-30 flex flex-col md:flex-row md:items-center justify-between gap-4 py-4 border-b border-line/60">
+          {/* STICKY HEADER */}
+          <div className="sticky top-0 bg-bg/95 backdrop-blur-md z-30 flex flex-col md:flex-row md:items-center justify-between gap-4 py-4 border-b border-line/60">
             <div className="flex items-center gap-3">
               <button 
                 onClick={() => {
-                  if (isDirty && !window.confirm('You have unsaved changes. Are you sure you want to go back?')) return;
+                  if (isDirty && !window.confirm('You have unsaved changes. Going back will discard them.')) return;
                   setIsEditing(false);
                   setFormData(null);
                 }} 
-                className="p-2.5 rounded-xl hover:bg-bg-surface text-ink-muted hover:text-ink transition-colors border border-line/40"
+                className="p-2.5 rounded-xl hover:bg-bg-surface text-ink-muted hover:text-ink transition-colors border border-line/45"
               >
                 <ArrowLeft size={18} />
               </button>
               <div>
-                <h2 className="text-lg font-display font-black text-ink truncate max-w-xs md:max-w-md">
-                  {formData.title || 'Untitled Post'}
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-accent">Writing workspace</span>
+                <h2 className="text-base font-bold text-ink leading-tight truncate max-w-xs md:max-w-md mt-0.5">
+                  {formData.title || 'Untitled Article'}
                 </h2>
-                <div className="flex items-center gap-2 mt-0.5">
-                  <span className={`w-2 h-2 rounded-full ${autoSaveStatus === 'Saved' || autoSaveStatus === 'Saved locally' ? 'bg-green-500' : autoSaveStatus === 'Saving...' ? 'bg-accent animate-pulse' : 'bg-red-500'}`} />
-                  <span className="text-[10px] font-mono tracking-wide uppercase text-ink-muted/80">{autoSaveStatus}</span>
-                </div>
               </div>
             </div>
 
             <div className="flex items-center flex-wrap gap-2">
+              <span className="flex items-center gap-1.5 px-3 py-1.5 bg-bg-surface border border-line/50 rounded-xl text-[10px] font-mono text-ink-muted uppercase">
+                <span className={`w-1.5 h-1.5 rounded-full ${autoSaveStatus.startsWith('Saved') ? 'bg-green-500' : 'bg-accent animate-pulse'}`} />
+                {autoSaveStatus}
+              </span>
               <button
                 type="button"
                 onClick={() => setShowVersionHistory(true)}
@@ -502,354 +516,222 @@ export const BlogEditor = ({ showToast }) => {
                 className="bg-accent text-bg px-5 py-2 rounded-xl font-bold hover:bg-accent-light transition-all flex items-center gap-1.5 text-xs shadow-lg shadow-accent/15"
               >
                 <Check size={14} />
-                <span>Save changes</span>
+                <span>Save Post</span>
               </button>
             </div>
           </div>
 
-          {/* TWO COLUMN CMS WORKSPACE */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            
-            {/* LEFT COLUMN - CONTENT WRITER & LIVE PREVIEW */}
-            <div className="lg:col-span-8 space-y-6">
-              
-              {/* Cover Image Upload Card */}
-              <AdminCard title="Featured Cover Image">
-                <FileUploader 
-                  folder="blog"
-                  currentUrl={formData.cover_image_url}
-                  currentPublicId={formData.cover_image_public_id}
-                  onUploadComplete={handleUploadComplete}
-                  onDelete={handleDeleteImage}
-                  accept="image/*"
-                  label="Upload blog cover image (16:9 recommended)"
-                />
-              </AdminCard>
+          {/* TAB SEGMENTS FOR COSY COMPOSER */}
+          <div className="flex border-b border-line/40 pb-2 gap-1 overflow-x-auto">
+            <button
+              onClick={() => setEditorTab('write')}
+              className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all ${editorTab === 'write' ? 'bg-accent/10 text-accent border border-accent/20' : 'text-ink-muted hover:text-ink hover:bg-bg-surface/50 border border-transparent'}`}
+            >
+              <Type size={14} /> Write Content
+            </button>
+            <button
+              onClick={() => setEditorTab('settings')}
+              className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all ${editorTab === 'settings' ? 'bg-accent/10 text-accent border border-accent/20' : 'text-ink-muted hover:text-ink hover:bg-bg-surface/50 border border-transparent'}`}
+            >
+              <Sliders size={14} /> Metadata & Cover
+            </button>
+            <button
+              onClick={() => setEditorTab('preview')}
+              className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all ${editorTab === 'preview' ? 'bg-accent/10 text-accent border border-accent/20' : 'text-ink-muted hover:text-ink hover:bg-bg-surface/50 border border-transparent'}`}
+            >
+              <Eye size={14} /> Live Blog Preview
+            </button>
+          </div>
 
-              {/* Title & Slug settings */}
-              <AdminCard title="Post Details">
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-xs uppercase tracking-wider font-bold text-ink-muted mb-2 font-mono">Blog Post Title</label>
-                    <input
-                      type="text"
-                      name="title"
-                      value={formData.title}
-                      onChange={handleChange}
-                      placeholder="Enter a compelling title..."
-                      className="w-full bg-bg border border-line rounded-xl px-4 py-3 text-base font-bold text-ink focus:outline-none focus:border-accent transition-colors"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs uppercase tracking-wider font-bold text-ink-muted mb-2 font-mono">URL path Slug</label>
-                    <div className="flex rounded-xl overflow-hidden border border-line">
-                      <span className="bg-bg-surface px-3 py-2 text-xs text-ink-muted flex items-center border-r border-line font-mono select-none">
-                        aadhi.life/blog/
-                      </span>
-                      <input
-                        type="text"
-                        name="slug"
-                        value={formData.slug}
-                        onChange={handleChange}
-                        placeholder="why-i-left-school"
-                        className="w-full bg-bg px-4 py-2 text-xs text-ink focus:outline-none font-mono"
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs uppercase tracking-wider font-bold text-ink-muted mb-2 font-mono">Category</label>
-                      <select
-                        name="category"
-                        value={formData.category}
-                        onChange={handleChange}
-                        className="w-full bg-bg-surface border border-line rounded-xl px-3 py-2.5 text-xs text-ink focus:outline-none focus:border-accent cursor-pointer font-semibold"
-                      >
-                        {CATEGORIES.map(cat => (
-                          <option key={cat} value={cat}>{cat}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs uppercase tracking-wider font-bold text-ink-muted mb-2 font-mono">Estimated Read Time</label>
-                      <input
-                        type="text"
-                        name="read_time"
-                        value={formData.read_time}
-                        onChange={handleChange}
-                        placeholder="5 min"
-                        className="w-full bg-bg border border-line rounded-xl px-3 py-2 text-xs text-ink focus:outline-none focus:border-accent font-mono"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-xs uppercase tracking-wider font-bold text-ink-muted mb-2 font-mono">Excerpt / Short Description</label>
-                    <textarea
-                      name="excerpt"
-                      value={formData.excerpt}
-                      onChange={handleChange}
-                      rows={3}
-                      placeholder="Brief description summarizing the post..."
-                      className="w-full bg-bg border border-line rounded-xl px-4 py-2 text-xs text-ink focus:outline-none focus:border-accent resize-none leading-relaxed"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs uppercase tracking-wider font-bold text-ink-muted mb-2 font-mono">Demo Video Link (optional)</label>
-                    <input
-                      type="url"
-                      name="video_url"
-                      value={formData.video_url || ''}
-                      onChange={handleChange}
-                      placeholder="https://youtube.com/watch?v=..."
-                      className="w-full bg-bg border border-line rounded-xl px-4 py-2 text-xs text-ink focus:outline-none focus:border-accent font-mono"
-                    />
-                  </div>
-                </div>
-              </AdminCard>
-
-              {/* MD Editor Block */}
-              <div className="bg-bg-surface border border-line rounded-2xl overflow-hidden flex flex-col">
-                <div className="flex items-center justify-between px-6 py-4 border-b border-line bg-bg-surface/20 flex-wrap gap-4">
-                  <h3 className="font-bold text-base text-ink flex items-center gap-2">
-                    <BookOpen size={16} className="text-accent" />
-                    <span>Markdown Canvas</span>
-                  </h3>
-                  <div className="flex items-center gap-1 bg-bg p-1 rounded-xl border border-line/50">
-                    <button
-                      type="button"
-                      onClick={() => setEditorMode('write')}
-                      className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${editorMode === 'write' ? 'bg-accent text-bg shadow-sm' : 'text-ink-muted hover:text-ink'}`}
-                    >
-                      Write
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setEditorMode('split')}
-                      className={`hidden md:block px-3 py-1 rounded-lg text-xs font-semibold transition-all ${editorMode === 'split' ? 'bg-accent text-bg shadow-sm' : 'text-ink-muted hover:text-ink'}`}
-                    >
-                      Split View
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setEditorMode('preview')}
-                      className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${editorMode === 'preview' ? 'bg-accent text-bg shadow-sm' : 'text-ink-muted hover:text-ink'}`}
-                    >
-                      Preview
-                    </button>
-                  </div>
+          {/* WORKSPACE CONTENT RENDER */}
+          <div className="min-h-[400px]">
+            {editorTab === 'write' && (
+              <div className="space-y-6 max-w-4xl mx-auto">
+                {/* Minimal title entry */}
+                <div className="py-4">
+                  <input
+                    type="text"
+                    name="title"
+                    value={formData.title}
+                    onChange={handleChange}
+                    placeholder="Enter Article Title..."
+                    className="w-full bg-transparent text-3xl font-display font-black text-ink focus:outline-none placeholder-ink-muted/30 border-b border-line/30 pb-3"
+                  />
                 </div>
 
-                <div className="flex flex-col">
+                {/* Markdown rich editor */}
+                <div className="bg-bg-surface border border-line rounded-2xl overflow-hidden shadow-sm flex flex-col">
                   {/* Markdown Tool buttons */}
-                  {editorMode !== 'preview' && (
-                    <div className="flex flex-wrap items-center gap-1 p-2 bg-bg border-b border-line overflow-x-auto">
-                      <button type="button" onClick={() => insertFormatting('# ')} className="p-2 hover:bg-bg-surface rounded-lg text-ink-muted hover:text-ink transition-colors" title="H1"><Heading size={15} /></button>
-                      <button type="button" onClick={() => insertFormatting('## ')} className="p-2 hover:bg-bg-surface rounded-lg text-ink-muted hover:text-ink transition-colors font-bold text-xs" title="H2">H2</button>
-                      <div className="w-[1px] h-5 bg-line mx-1" />
-                      <button type="button" onClick={() => insertFormatting('**', '**')} className="p-2 hover:bg-bg-surface rounded-lg text-ink-muted hover:text-ink transition-colors" title="Bold"><Bold size={15} /></button>
-                      <button type="button" onClick={() => insertFormatting('*', '*')} className="p-2 hover:bg-bg-surface rounded-lg text-ink-muted hover:text-ink transition-colors" title="Italic"><Italic size={15} /></button>
-                      <button type="button" onClick={() => insertFormatting('<u>', '</u>')} className="p-2 hover:bg-bg-surface rounded-lg text-ink-muted hover:text-ink transition-colors" title="Underline"><Underline size={15} /></button>
-                      <div className="w-[1px] h-5 bg-line mx-1" />
-                      <button type="button" onClick={() => insertFormatting('- ')} className="p-2 hover:bg-bg-surface rounded-lg text-ink-muted hover:text-ink transition-colors" title="Bullet List"><List size={15} /></button>
-                      <button type="button" onClick={() => insertFormatting('\n| Header 1 | Header 2 |\n| -------- | -------- |\n| Cell 1 | Cell 2 |\n')} className="p-2 hover:bg-bg-surface rounded-lg text-ink-muted hover:text-ink font-bold text-xs transition-colors" title="Table">Table</button>
-                      <div className="w-[1px] h-5 bg-line mx-1" />
-                      <button type="button" onClick={() => insertFormatting('\n```javascript\n', '\n```\n')} className="p-2 hover:bg-bg-surface rounded-lg text-ink-muted hover:text-ink transition-colors" title="Code Block"><Code size={15} /></button>
-                      <button type="button" onClick={() => insertFormatting('> ')} className="p-2 hover:bg-bg-surface rounded-lg text-ink-muted hover:text-ink transition-colors" title="Blockquote"><Quote size={15} /></button>
-                      <button type="button" onClick={() => insertFormatting('[', '](https://)')} className="p-2 hover:bg-bg-surface rounded-lg text-ink-muted hover:text-ink transition-colors" title="Hyperlink"><LinkIcon size={15} /></button>
-                      <button type="button" onClick={() => insertFormatting('![Image Description](', ')')} className="p-2 hover:bg-bg-surface rounded-lg text-ink-muted hover:text-ink transition-colors" title="Image Tag"><ImageIcon size={15} /></button>
-                    </div>
-                  )}
+                  <div className="flex flex-wrap items-center gap-1 p-2 bg-bg border-b border-line overflow-x-auto">
+                    <button type="button" onClick={() => insertFormatting('# ')} className="p-2 hover:bg-bg-surface rounded-lg text-ink-muted hover:text-ink transition-colors" title="H1"><Heading size={15} /></button>
+                    <button type="button" onClick={() => insertFormatting('## ')} className="p-2 hover:bg-bg-surface rounded-lg text-ink-muted hover:text-ink transition-colors font-bold text-xs" title="H2">H2</button>
+                    <div className="w-[1px] h-5 bg-line mx-1" />
+                    <button type="button" onClick={() => insertFormatting('**', '**')} className="p-2 hover:bg-bg-surface rounded-lg text-ink-muted hover:text-ink transition-colors" title="Bold"><Bold size={15} /></button>
+                    <button type="button" onClick={() => insertFormatting('*', '*')} className="p-2 hover:bg-bg-surface rounded-lg text-ink-muted hover:text-ink transition-colors" title="Italic"><Italic size={15} /></button>
+                    <button type="button" onClick={() => insertFormatting('<u>', '</u>')} className="p-2 hover:bg-bg-surface rounded-lg text-ink-muted hover:text-ink transition-colors" title="Underline"><Underline size={15} /></button>
+                    <div className="w-[1px] h-5 bg-line mx-1" />
+                    <button type="button" onClick={() => insertFormatting('- ')} className="p-2 hover:bg-bg-surface rounded-lg text-ink-muted hover:text-ink transition-colors" title="Bullet List"><List size={15} /></button>
+                    <button type="button" onClick={() => insertFormatting('\n| Header 1 | Header 2 |\n| -------- | -------- |\n| Cell 1 | Cell 2 |\n')} className="p-2 hover:bg-bg-surface rounded-lg text-ink-muted hover:text-ink font-bold text-xs transition-colors" title="Table">Table</button>
+                    <div className="w-[1px] h-5 bg-line mx-1" />
+                    <button type="button" onClick={() => insertFormatting('\n```javascript\n', '\n```\n')} className="p-2 hover:bg-bg-surface rounded-lg text-ink-muted hover:text-ink transition-colors" title="Code Block"><Code size={15} /></button>
+                    <button type="button" onClick={() => insertFormatting('> ')} className="p-2 hover:bg-bg-surface rounded-lg text-ink-muted hover:text-ink transition-colors" title="Blockquote"><Quote size={15} /></button>
+                    <button type="button" onClick={() => insertFormatting('[', '](https://)')} className="p-2 hover:bg-bg-surface rounded-lg text-ink-muted hover:text-ink transition-colors" title="Hyperlink"><LinkIcon size={15} /></button>
+                    <button type="button" onClick={() => insertFormatting('![Image Description](', ')')} className="p-2 hover:bg-bg-surface rounded-lg text-ink-muted hover:text-ink transition-colors" title="Image Tag"><ImageIcon size={15} /></button>
+                  </div>
 
-                  {/* Editors layout canvas */}
-                  <div className={`grid grid-cols-1 ${editorMode === 'split' ? 'md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-line/60' : ''} bg-bg/50`}>
-                    {/* TextArea input */}
-                    {editorMode !== 'preview' && (
+                  <textarea
+                    ref={textareaRef}
+                    name="body"
+                    value={formData.body}
+                    onChange={handleChange}
+                    rows={20}
+                    placeholder="Tell your story in Markdown format..."
+                    className="w-full bg-transparent p-6 text-ink focus:outline-none font-mono text-sm leading-relaxed resize-y min-h-[380px] outline-none"
+                  />
+
+                  {/* HUD status bar */}
+                  <div className="flex flex-wrap items-center justify-between px-5 py-3 border-t border-line bg-bg-surface/20 text-xs text-ink-muted font-mono gap-4">
+                    <div className="flex gap-4 font-semibold">
+                      <span>Words: <span className="text-ink font-bold">{wordCount}</span></span>
+                      <span>Chars: <span className="text-ink font-bold">{charCount}</span></span>
+                      <span>Estimate: <span className="text-accent font-bold">{readTimeEst}</span></span>
+                    </div>
+                    <span className="text-[10px] tracking-wider uppercase font-bold text-accent">MD Canvas Active</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {editorTab === 'settings' && (
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-8 max-w-5xl mx-auto">
+                {/* Left side details */}
+                <div className="md:col-span-7 space-y-6">
+                  <AdminCard title="Featured Cover Image">
+                    <FileUploader 
+                      folder="blog"
+                      currentUrl={formData.cover_image_url}
+                      currentPublicId={formData.cover_image_public_id}
+                      onUploadComplete={handleUploadComplete}
+                      onDelete={handleDeleteImage}
+                      accept="image/*"
+                      label="Upload blog cover image (16:9 ratio recommended)"
+                    />
+                  </AdminCard>
+
+                  <AdminCard title="SEO Short Description">
+                    <div>
+                      <label className="block text-xs uppercase tracking-wider font-bold text-ink-muted mb-2 font-mono">Excerpt / Intro Summary</label>
                       <textarea
-                        ref={textareaRef}
-                        name="body"
-                        value={formData.body}
+                        name="excerpt"
+                        value={formData.excerpt}
                         onChange={handleChange}
-                        rows={22}
-                        placeholder="Type story content in Markdown format..."
-                        className="w-full bg-transparent p-5 text-ink focus:outline-none font-mono text-xs md:text-sm leading-relaxed resize-y min-h-[350px] outline-none"
-                      />
-                    )}
-                    
-                    {/* Rendered HTML preview */}
-                    {editorMode !== 'write' && (
-                      <div className="p-6 prose dark:prose-invert prose-accent max-w-none max-h-[600px] overflow-y-auto bg-bg-surface/30">
-                        <div 
-                          className="markdown-body font-body text-sm leading-relaxed" 
-                          dangerouslySetInnerHTML={{ __html: marked.parse(formData.body || '*No content yet. Start writing!*') }} 
-                        />
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Footer counters */}
-                <div className="flex flex-wrap items-center justify-between px-5 py-3.5 border-t border-line/60 bg-bg-surface/20 text-xs text-ink-muted font-semibold gap-4 font-mono">
-                  <div className="flex gap-4">
-                    <span>Words: <span className="text-ink font-bold">{wordCount}</span></span>
-                    <span>Characters: <span className="text-ink font-bold">{charCount}</span></span>
-                    <span>Read: <span className="text-accent font-bold">{readTimeEst}</span></span>
-                  </div>
-                  <span className="text-[10px] tracking-wider uppercase font-bold text-accent">Markdown Engine Live</span>
-                </div>
-              </div>
-            </div>
-
-            {/* RIGHT COLUMN - SIDEBAR ANALYTICS & COMMENT BOX */}
-            <div className="lg:col-span-4 space-y-6">
-              
-              {/* Quick statistics */}
-              <div className="grid grid-cols-2 gap-3.5">
-                <div className="bg-bg-surface border border-line/60 p-4 rounded-2xl flex items-center gap-3">
-                  <div className="p-2 rounded-xl bg-blue-500/10 text-blue-500"><Eye size={18} /></div>
-                  <div>
-                    <p className="text-[10px] text-ink-muted uppercase font-bold tracking-wider font-mono">Views</p>
-                    <p className="text-lg font-bold text-ink mt-0.5 font-mono">{formData.views}</p>
-                  </div>
-                </div>
-
-                <div className="bg-bg-surface border border-line/60 p-4 rounded-2xl flex items-center gap-3">
-                  <div className="p-2 rounded-xl bg-pink-500/10 text-pink-500"><Heart size={18} /></div>
-                  <div>
-                    <p className="text-[10px] text-ink-muted uppercase font-bold tracking-wider font-mono">Likes</p>
-                    <p className="text-lg font-bold text-ink mt-0.5 font-mono">{formData.likes}</p>
-                  </div>
-                </div>
-
-                <div className="bg-bg-surface border border-line/60 p-4 rounded-2xl flex items-center gap-3">
-                  <div className="p-2 rounded-xl bg-green-500/10 text-green-500"><Share2 size={18} /></div>
-                  <div>
-                    <p className="text-[10px] text-ink-muted uppercase font-bold tracking-wider font-mono">Shares</p>
-                    <p className="text-lg font-bold text-ink mt-0.5 font-mono">{formData.shares}</p>
-                  </div>
-                </div>
-
-                <div className="bg-bg-surface border border-line/60 p-4 rounded-2xl flex items-center gap-3">
-                  <div className="p-2 rounded-xl bg-accent/10 text-accent"><MessageSquare size={18} /></div>
-                  <div>
-                    <p className="text-[10px] text-ink-muted uppercase font-bold tracking-wider font-mono">Comments</p>
-                    <p className="text-lg font-bold text-ink mt-0.5 font-mono">{formData.comments?.length || 0}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* COMMENTS MANAGEMENT LIST */}
-              <div className="bg-bg-surface border border-line/60 rounded-2xl overflow-hidden shadow-sm flex flex-col">
-                <div className="px-5 py-4 border-b border-line bg-bg-surface/40 space-y-4">
-                  <h3 className="font-bold text-base text-ink flex items-center gap-2">
-                    <MessageSquare size={16} className="text-accent" />
-                    <span>Article Comments</span>
-                  </h3>
-                  
-                  <div className="flex gap-2">
-                    <div className="relative flex-1">
-                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-muted" size={13} />
-                      <input
-                        type="text"
-                        placeholder="Search comments..."
-                        value={searchComment}
-                        onChange={(e) => setSearchComment(e.target.value)}
-                        className="w-full bg-bg border border-line/60 rounded-lg pl-8 pr-3 py-1.5 text-xs text-ink focus:outline-none"
+                        rows={4}
+                        placeholder="Brief summary displayed in post listings and social shares..."
+                        className="w-full bg-bg border border-line rounded-xl px-4 py-2.5 text-xs text-ink focus:outline-none focus:border-accent resize-none leading-relaxed"
                       />
                     </div>
-                    <select
-                      value={sortCommentOrder}
-                      onChange={(e) => setSortCommentOrder(e.target.value)}
-                      className="bg-bg border border-line/60 rounded-lg px-2 py-1.5 text-xs text-ink cursor-pointer focus:outline-none"
-                    >
-                      <option value="newest">Newest</option>
-                      <option value="oldest">Oldest</option>
-                    </select>
-                  </div>
+                  </AdminCard>
                 </div>
 
-                {/* Comments List Content */}
-                <div className="p-4 space-y-4 max-h-[460px] overflow-y-auto divide-y divide-line/30">
-                  {filteredComments.length === 0 ? (
-                    <p className="text-xs text-ink-muted text-center py-8">No comments found.</p>
-                  ) : (
-                    filteredComments.map(comment => (
-                      <div key={comment.id} className="pt-4 first:pt-0 space-y-2 relative">
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-full bg-accent/10 border border-accent/25 text-accent flex items-center justify-center font-bold text-xs">
-                              {comment.avatar || comment.name.substring(0, 1).toUpperCase()}
-                            </div>
-                            <div>
-                              <h4 className="text-xs font-bold text-ink flex items-center gap-1.5">
-                                <span>{comment.name}</span>
-                                {comment.pinned && <Pin size={10} className="text-accent rotate-45" />}
-                                {comment.featured && <Star size={10} className="text-yellow-500 fill-yellow-500" />}
-                              </h4>
-                              <span className="text-[9px] text-ink-muted/80 font-mono">{comment.date}</span>
-                            </div>
-                          </div>
-
-                          <div className="flex gap-1 shrink-0">
-                            <button 
-                              onClick={() => handlePinComment(comment.id)} 
-                              className={`p-1 rounded-lg hover:bg-bg-hover/10 text-ink-muted ${comment.pinned ? 'text-accent bg-accent/5 border border-accent/10' : 'border border-transparent'}`}
-                              title={comment.pinned ? 'Unpin' : 'Pin to Top'}
-                            >
-                              <Pin size={12} className={comment.pinned ? 'rotate-45' : ''} />
-                            </button>
-                            <button 
-                              onClick={() => handleFeatureComment(comment.id)} 
-                              className={`p-1 rounded-lg hover:bg-bg-hover/10 text-ink-muted ${comment.featured ? 'text-yellow-500 bg-yellow-500/5 border border-yellow-500/10' : 'border border-transparent'}`}
-                              title={comment.featured ? 'Remove Featured' : 'Mark as Featured'}
-                            >
-                              <Star size={12} className={comment.featured ? 'fill-yellow-500 text-yellow-500' : ''} />
-                            </button>
-                            <button 
-                              onClick={() => handleDeleteComment(comment.id)} 
-                              className="p-1 rounded-lg hover:bg-red-500/10 border border-transparent hover:border-red-500/20 text-ink-muted hover:text-red-500"
-                              title="Delete"
-                            >
-                              <Trash2 size={12} />
-                            </button>
-                          </div>
-                        </div>
-
-                        <p className="text-xs text-ink-muted font-medium leading-relaxed font-body pl-10">
-                          {comment.comment}
-                        </p>
-
-                        {comment.replies?.map(r => (
-                          <div key={r.id} className="ml-10 p-2.5 bg-bg/50 border-l-2 border-accent rounded-lg text-xs space-y-1">
-                            <div className="flex justify-between items-center">
-                              <span className="font-bold text-[10px] text-accent">{r.name}</span>
-                              <span className="text-[8px] text-ink-muted font-mono">{r.date}</span>
-                            </div>
-                            <p className="text-ink-muted/90 font-body">{r.comment}</p>
-                          </div>
-                        ))}
-
-                        <div className="pl-10 pt-1 flex gap-2">
+                {/* Right side config details */}
+                <div className="md:col-span-5 space-y-6">
+                  <AdminCard title="Post Routing & Labels">
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-xs uppercase tracking-wider font-bold text-ink-muted mb-2 font-mono">URL path Slug</label>
+                        <div className="flex rounded-xl overflow-hidden border border-line bg-bg">
+                          <span className="bg-bg-surface px-2.5 py-2 text-[10px] text-ink-muted flex items-center border-r border-line font-mono select-none">
+                            /blog/
+                          </span>
                           <input
                             type="text"
-                            placeholder="Type a reply..."
-                            value={replyInputs[comment.id] || ''}
-                            onChange={(e) => setReplyInputs(prev => ({ ...prev, [comment.id]: e.target.value }))}
-                            className="w-full bg-bg border border-line rounded-lg px-2.5 py-1 text-xs text-ink focus:outline-none focus:border-accent"
+                            name="slug"
+                            value={formData.slug}
+                            onChange={handleChange}
+                            placeholder="my-first-post"
+                            className="w-full bg-transparent px-3 py-1.5 text-xs text-ink focus:outline-none font-mono"
                           />
-                          <button
-                            onClick={() => handleSendReply(comment.id)}
-                            className="bg-accent text-bg px-2.5 py-1 rounded-lg hover:bg-accent-light transition-colors"
-                          >
-                            <Send size={10} />
-                          </button>
                         </div>
                       </div>
-                    ))
-                  )}
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs uppercase tracking-wider font-bold text-ink-muted mb-2 font-mono">Category</label>
+                          <select
+                            name="category"
+                            value={formData.category}
+                            onChange={handleChange}
+                            className="w-full bg-bg border border-line rounded-xl px-2.5 py-2 text-xs text-ink focus:outline-none focus:border-accent cursor-pointer font-bold"
+                          >
+                            {CATEGORIES.map(cat => (
+                              <option key={cat} value={cat}>{cat}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-xs uppercase tracking-wider font-bold text-ink-muted mb-2 font-mono">Read time</label>
+                          <input
+                            type="text"
+                            name="read_time"
+                            value={formData.read_time}
+                            onChange={handleChange}
+                            placeholder="5 min"
+                            className="w-full bg-bg border border-line rounded-xl px-3 py-2 text-xs text-ink focus:outline-none focus:border-accent font-mono font-semibold"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs uppercase tracking-wider font-bold text-ink-muted mb-2 font-mono">Demo Video Link (Optional)</label>
+                        <input
+                          type="url"
+                          name="video_url"
+                          value={formData.video_url || ''}
+                          onChange={handleChange}
+                          placeholder="e.g. YouTube url"
+                          className="w-full bg-bg border border-line rounded-xl px-3 py-2 text-xs text-ink focus:outline-none focus:border-accent font-mono"
+                        />
+                      </div>
+                    </div>
+                  </AdminCard>
                 </div>
               </div>
-            </div>
+            )}
 
+            {editorTab === 'preview' && (
+              <div className="max-w-3xl mx-auto bg-bg-surface border border-line rounded-3xl overflow-hidden shadow-xl p-6 sm:p-10 space-y-6">
+                {/* Rendered post mockup */}
+                {formData.cover_image_url && (
+                  <img 
+                    src={formData.cover_image_url} 
+                    alt={formData.title} 
+                    className="w-full aspect-[21/9] object-cover rounded-2xl border border-line/40 shadow-sm"
+                  />
+                )}
+                
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <span className="text-[10px] uppercase font-bold tracking-wider text-accent bg-accent/5 border border-accent/15 px-2.5 py-0.5 rounded-md">
+                      {formData.category || 'Personal'}
+                    </span>
+                    <span className="text-xs text-ink-muted font-mono">{formData.read_time || '5 min read'}</span>
+                  </div>
+                  <h1 className="text-3xl font-display font-black text-ink leading-tight">
+                    {formData.title || 'Untitled Post'}
+                  </h1>
+                  <p className="text-sm font-semibold text-ink-muted/80 leading-relaxed italic border-l-2 border-accent pl-3">
+                    {formData.excerpt || 'No excerpt summary written yet.'}
+                  </p>
+                </div>
+
+                <div className="border-t border-line/45 pt-6 prose dark:prose-invert prose-accent max-w-none">
+                  <div 
+                    className="markdown-body font-body text-sm leading-relaxed" 
+                    dangerouslySetInnerHTML={{ __html: marked.parse(formData.body || '*Post body is empty. Write something under the content tab.*') }} 
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
