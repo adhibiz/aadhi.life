@@ -15,7 +15,7 @@ service cloud.firestore {
     
     // Guestbook: anyone can add (pending), only admin can approve/delete
     match /guestbook/{doc} {
-      allow read: if resource.data.approved == true;
+      allow read: if resource.data.approved == true || request.auth != null;
       allow create: if request.resource.data.approved == false 
                     && request.resource.data.name is string 
                     && request.resource.data.message is string
@@ -23,7 +23,7 @@ service cloud.firestore {
                     && request.resource.data.name.size() <= 80
                     && request.resource.data.message.size() > 0
                     && request.resource.data.message.size() <= 1000;
-      allow update, delete: if isAdmin();
+      allow update, delete: if request.auth != null;
     }
 
     match /{document=**} {

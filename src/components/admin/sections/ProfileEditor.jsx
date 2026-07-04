@@ -83,7 +83,7 @@ export const ProfileEditor = ({ showToast }) => {
       showToast("Profile saved successfully");
     } catch (error) {
       console.error(error);
-      showToast("Failed to save profile", "error");
+      showToast(`Failed to save profile: ${error.message || error}`, "error");
     } finally {
       setIsSaving(false);
     }

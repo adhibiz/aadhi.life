@@ -44,9 +44,8 @@ export const Guestbook = () => {
     }
 
     const q = query(
-      collection(db, 'guestbook'), 
-      where('approved', '==', true),
-      orderBy('created_at', 'desc')
+      collection(db, 'guestbook'),
+      where('approved', '==', true)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -58,8 +57,10 @@ export const Guestbook = () => {
           const data = doc.data();
           const date = data.created_at ? new Date(data.created_at.toDate()) : new Date();
           const date_str = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-          docs.push({ id: doc.id, ...data, date_str });
+          docs.push({ id: doc.id, ...data, date_str, created_time: date.getTime() });
         });
+        // Sort newest first
+        docs.sort((a, b) => b.created_time - a.created_time);
         setMessages(docs);
       }
       setLoading(false);
