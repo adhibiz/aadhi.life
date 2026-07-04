@@ -24,3 +24,5 @@ scripts/serviceAccountKey.json
 *.njsproj
 *.sln
 *.sw?
+
+.vercel
