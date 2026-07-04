@@ -1,224 +1,262 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Mail, MapPin, AtSign, Download, ArrowRight, Globe } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Mail, MapPin, Download, ArrowUpRight, Copy, CheckCheck, Send } from 'lucide-react';
 import { FaGithub, FaLinkedin, FaInstagram } from 'react-icons/fa';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
-import { Button } from '../ui/Button';
+
+/* ── Floating ambient orb ─────────────────────────────────────────────── */
+const Orb = ({ className, style }) => (
+  <div className={`absolute rounded-full blur-[120px] pointer-events-none select-none ${className}`} style={style} />
+);
+
+/* ── Contact card ─────────────────────────────────────────────────────── */
+const ContactCard = ({ icon, label, value, href, accent, delay, action }) => {
+  const inner = (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5, delay }}
+      whileHover={{ y: -3, scale: 1.012 }}
+      className="group relative flex items-center gap-4 p-4 sm:p-5 rounded-2xl border border-line/60 bg-bg-surface/60 backdrop-blur-sm overflow-hidden cursor-pointer transition-colors duration-300 hover:border-line-strong"
+    >
+      {/* Hover shimmer */}
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+        style={{ background: `radial-gradient(circle at 30% 50%, ${accent}18 0%, transparent 60%)` }} />
+
+      {/* Icon */}
+      <div
+        className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 border transition-all duration-300 group-hover:scale-110"
+        style={{ background: `${accent}15`, borderColor: `${accent}30`, color: accent }}
+      >
+        {icon}
+      </div>
+
+      {/* Text */}
+      <div className="flex-1 min-w-0">
+        <p className="text-[10px] font-mono font-bold uppercase tracking-[0.18em] text-ink-muted/60 mb-0.5">{label}</p>
+        <p className="text-sm font-semibold text-ink group-hover:text-accent transition-colors truncate">{value}</p>
+      </div>
+
+      {/* Right action / arrow */}
+      <div className="shrink-0">
+        {action ?? <ArrowUpRight size={15} className="text-ink-muted/40 group-hover:text-accent group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />}
+      </div>
+    </motion.div>
+  );
+
+  return href ? (
+    <a href={href} target="_blank" rel="noreferrer" className="block">{inner}</a>
+  ) : (
+    <div className="block">{inner}</div>
+  );
+};
 
 export const Contact = () => {
   const [profile, setProfile] = useState(null);
-  const [resumeUrl, setResumeUrl] = useState('/resume.pdf');
-  const [openToWork, setOpenToWork] = useState(true);
-  const [openToWorkText, setOpenToWorkText] = useState('Available for internships');
-  const [availableFor, setAvailableFor] = useState([
-    'Internships',
-    'Freelance projects',
-    'Workshop facilitation',
-    'Collaborations',
-    'Speaking / Guest sessions'
-  ]);
-
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        if (!db) return;
-        const docRef = doc(db, 'site_meta', 'profile');
-        const docSnap = await getDoc(docRef);
-        
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          setProfile(data);
-          if (data.resume_url) setResumeUrl(data.resume_url);
-          if (data.open_to_work !== undefined) setOpenToWork(data.open_to_work);
-          if (data.open_to_work_text) setOpenToWorkText(data.open_to_work_text);
-          if (data.available_for && data.available_for.length > 0) {
-            setAvailableFor(data.available_for);
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching profile details for contact:", error);
-      }
-    };
-
-    fetchProfile();
-  }, []);
-
   const [copied, setCopied] = useState(false);
 
-  const emailVal = profile?.email || 'adhi2003@hotmail.com';
-  const githubVal = profile?.github || 'https://github.com/adhibiz';
-  const linkedinVal = profile?.linkedin || 'https://linkedin.com/in/adhibiz';
-  const locationVal = profile?.location_current || 'Chennai / Tenkasi TN';
-  const instagramVal = profile?.instagram || '#';
+  const openToWork      = profile?.open_to_work ?? true;
+  const openToWorkText  = profile?.open_to_work_text || 'Available for internships';
+  const availableFor    = profile?.available_for?.length
+    ? profile.available_for
+    : ['Internships', 'Freelance projects', 'Workshop facilitation', 'Collaborations', 'Speaking / Guest sessions'];
 
-  const handleCopyEmail = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const heading     = profile?.contact_heading    || "Let's Connect";
+  const subheading  = profile?.contact_subheading || "I'm open to collaborations, internships, workshops, and conversations about tech, game engines, and building things from scratch.";
+  const resumeUrl   = profile?.resume_url || '';
+
+  useEffect(() => {
+    if (!db) return;
+    getDoc(doc(db, 'site_meta', 'profile')).then(snap => {
+      if (snap.exists()) setProfile(snap.data());
+    }).catch(console.error);
+  }, []);
+
+  const emailVal    = profile?.email    || 'adhi2003@hotmail.com';
+  const githubVal   = profile?.github   || 'https://github.com/adhibiz';
+  const linkedinVal = profile?.linkedin || 'https://linkedin.com/in/adhibiz';
+  const instagramVal= profile?.instagram|| '#';
+  const locationVal = profile?.location_current || 'Chennai / Tenkasi, TN';
+
+  const handleCopy = (e) => {
+    e?.stopPropagation();
     navigator.clipboard.writeText(emailVal);
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setTimeout(() => setCopied(false), 2200);
   };
 
-  const contactMethods = [
-    { 
-      icon: <Mail size={18} />, 
-      label: 'Email', 
-      value: emailVal, 
+  const downloadUrl = resumeUrl?.includes('cloudinary.com')
+    ? resumeUrl.replace('/upload/', '/upload/fl_attachment/')
+    : resumeUrl;
+
+  const contactCards = [
+    {
+      icon: <Mail size={18} />,
+      label: 'Email',
+      value: emailVal,
       href: `mailto:${emailVal}`,
-      color: 'text-blue-400 border-blue-500/10 hover:border-blue-400/40 bg-blue-500/5',
+      accent: '#6366f1',
       action: (
-        <button 
-          onClick={handleCopyEmail}
-          className="text-[10px] font-mono font-bold px-2 py-1 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500/20 transition-colors shrink-0"
+        <button
+          onClick={handleCopy}
+          className="flex items-center gap-1.5 text-[10px] font-mono font-bold px-2.5 py-1.5 rounded-lg transition-all duration-200"
+          style={{
+            background: copied ? 'rgba(99,102,241,0.15)' : 'rgba(99,102,241,0.08)',
+            color: copied ? '#6366f1' : '#6b7280',
+            border: `1px solid ${copied ? 'rgba(99,102,241,0.3)' : 'rgba(99,102,241,0.15)'}`,
+          }}
         >
+          {copied ? <CheckCheck size={11} /> : <Copy size={11} />}
           {copied ? 'Copied!' : 'Copy'}
         </button>
       )
     },
-    { 
-      icon: <FaGithub size={18} />, 
-      label: 'GitHub', 
-      value: githubVal.replace('https://', ''), 
+    {
+      icon: <FaGithub size={18} />,
+      label: 'GitHub',
+      value: githubVal.replace('https://', ''),
       href: githubVal,
-      color: 'text-ink border-line hover:border-ink/40 bg-bg-surface/40'
+      accent: '#e2e8f0',
     },
-    { 
-      icon: <FaLinkedin size={18} />, 
-      label: 'LinkedIn', 
-      value: linkedinVal.replace('https://', '').replace('www.', ''), 
+    {
+      icon: <FaLinkedin size={18} />,
+      label: 'LinkedIn',
+      value: linkedinVal.replace('https://', '').replace('www.', ''),
       href: linkedinVal,
-      color: 'text-blue-500 border-blue-600/10 hover:border-blue-500/40 bg-blue-600/5'
+      accent: '#3b82f6',
     },
-    { 
-      icon: <FaInstagram size={18} />, 
-      label: 'Instagram', 
-      value: instagramVal !== '#' ? '@' + instagramVal.split('/').filter(Boolean).pop() : '@me_adhi.x', 
+    {
+      icon: <FaInstagram size={18} />,
+      label: 'Instagram',
+      value: instagramVal !== '#' ? '@' + instagramVal.split('/').filter(Boolean).pop() : '@me_adhi.x',
       href: instagramVal,
-      color: 'text-pink-400 border-pink-500/10 hover:border-pink-400/40 bg-pink-500/5'
+      accent: '#ec4899',
     },
-    { 
-      icon: <MapPin size={18} />, 
-      label: 'Location', 
-      value: locationVal, 
+    {
+      icon: <MapPin size={18} />,
+      label: 'Location',
+      value: locationVal,
       href: null,
-      color: 'text-accent border-accent/15 bg-accent/5'
-    }
+      accent: '#a78bfa',
+    },
   ];
 
+  const fadeUp = (delay = 0) => ({
+    initial: { opacity: 0, y: 28 },
+    whileInView: { opacity: 1, y: 0 },
+    viewport: { once: true },
+    transition: { duration: 0.6, delay },
+  });
+
   return (
-    <section id="contact" className="py-24 bg-bg relative overflow-hidden border-t border-line/60">
-      {/* Background ambient radial glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-accent/3 rounded-full blur-[160px] pointer-events-none" />
+    <section id="contact" className="relative py-28 sm:py-36 bg-bg overflow-hidden border-t border-line/50">
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        
+      {/* Ambient orbs */}
+      <Orb className="w-[500px] h-[500px] -top-32 -left-40 opacity-30" style={{ background: 'radial-gradient(circle, #6366f160 0%, transparent 70%)' }} />
+      <Orb className="w-[400px] h-[400px] bottom-0 right-0 opacity-25" style={{ background: 'radial-gradient(circle, #a855f750 0%, transparent 70%)' }} />
+
+      {/* Subtle grid overlay */}
+      <div className="absolute inset-0 opacity-[0.025] pointer-events-none"
+        style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,.8) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.8) 1px, transparent 1px)', backgroundSize: '56px 56px' }} />
+
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+
+        {/* ── Section Label ── */}
+        <motion.div {...fadeUp(0)} className="flex items-center gap-3 mb-6">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-accent/25 bg-accent/8 text-accent text-[10px] font-mono font-bold uppercase tracking-widest">
+            <Send size={10} />
+            Contact
+          </div>
+          <div className="h-px flex-1 bg-gradient-to-r from-accent/30 to-transparent max-w-[120px]" />
+        </motion.div>
+
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
-          
-          {/* Left panel */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="lg:col-span-5"
-          >
-            <h2 className="text-4xl md:text-5xl font-display font-bold text-ink mb-4">Let's Connect</h2>
-            <div className="w-20 h-1.5 bg-accent rounded-full mb-8" />
-            
-            <p className="text-base text-ink-muted mb-8 leading-relaxed">
-              I'm open to collaborations, internships, workshops, and conversations about tech, game engines, and building things from scratch.
-            </p>
 
-            {openToWork && (
-              <div className="border border-green-500/25 bg-gradient-to-r from-green-500/5 to-accent/5 backdrop-blur-md inline-flex items-center space-x-3.5 px-5 py-2.5 rounded-2xl mb-10 shadow-sm shadow-green-500/5 hover:border-green-500/40 transition-colors duration-300">
-                <span className="relative flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
-                </span>
-                <span className="text-xs font-mono font-bold tracking-wide uppercase text-ink flex items-center gap-1.5">
-                  <span>{openToWorkText}</span>
-                  <span className="text-ink-muted/50">&middot;</span>
-                  <span className="text-accent">{new Date().getFullYear()}</span>
-                </span>
-              </div>
-            )}
+          {/* ── LEFT ── */}
+          <div className="lg:col-span-5 space-y-8">
+            <motion.div {...fadeUp(0.05)}>
+              <h2
+                className="font-display font-black text-ink leading-[1.05] mb-5"
+                style={{ fontSize: 'clamp(2.4rem, 5vw, 3.6rem)', letterSpacing: '-0.03em' }}
+              >
+                {heading}
+                <span className="text-accent">.</span>
+              </h2>
+              <p className="text-base text-ink-muted leading-relaxed max-w-md">
+                {subheading}
+              </p>
+            </motion.div>
 
-            <div className="mb-10">
-              <h3 className="text-[10px] font-mono font-bold text-ink-muted/50 uppercase tracking-[0.2em] mb-4">
-                Availability Scope
-              </h3>
-              <ul className="space-y-3 text-ink font-medium text-sm">
-                {availableFor.map((item, idx) => (
-                  <li key={idx} className="flex items-center gap-2">
-                    <span className="text-accent text-xs">✓</span> 
-                    <span className="text-ink-muted/90">{item}</span>
-                  </li>
+            {/* Open to work badge */}
+            <AnimatePresence>
+              {openToWork && (
+                <motion.div
+                  key="otw"
+                  initial={{ opacity: 0, scale: 0.92 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.92 }}
+                  className="inline-flex items-center gap-3 px-5 py-3 rounded-2xl border border-green-500/25 bg-gradient-to-r from-green-500/8 to-emerald-500/5 backdrop-blur-sm shadow-sm shadow-green-500/5"
+                >
+                  <span className="relative flex h-2.5 w-2.5 shrink-0">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-70" />
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500" />
+                  </span>
+                  <span className="text-xs font-mono font-bold tracking-wide text-green-400">
+                    {openToWorkText}
+                  </span>
+                  <span className="text-[10px] font-mono text-ink-muted/50 border-l border-line/40 pl-3">
+                    {new Date().getFullYear()}
+                  </span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Availability tags */}
+            <motion.div {...fadeUp(0.15)}>
+              <p className="text-[10px] font-mono font-bold text-ink-muted/50 uppercase tracking-[0.2em] mb-4">Availability Scope</p>
+              <div className="flex flex-wrap gap-2">
+                {availableFor.map((item, i) => (
+                  <motion.span
+                    key={i}
+                    initial={{ opacity: 0, scale: 0.85 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.18 + i * 0.06, duration: 0.35 }}
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[11px] font-semibold border border-accent/20 bg-accent/5 text-ink-muted hover:text-accent hover:border-accent/40 hover:bg-accent/10 transition-all duration-200 cursor-default"
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-accent/60 shrink-0" />
+                    {item}
+                  </motion.span>
                 ))}
-              </ul>
-            </div>
+              </div>
+            </motion.div>
 
-            {resumeUrl && (() => {
-              const downloadUrl = resumeUrl.includes('cloudinary.com') 
-                ? resumeUrl.replace('/upload/', '/upload/fl_attachment/') 
-                : resumeUrl;
-              return (
-                <a href={downloadUrl} download="Resume.pdf" target="_blank" rel="noreferrer" className="inline-block w-full sm:w-auto">
-                  <Button className="w-full flex items-center justify-center gap-2 px-6 py-3 font-semibold shadow-lg shadow-accent/10 hover:shadow-accent/20 transition-all border border-accent/30 hover:border-accent">
-                    <Download size={16} />
-                    <span>Download Resume</span>
-                  </Button>
-                </a>
-              );
-            })()}
-          </motion.div>
-
-          {/* Right panel - Contacts list */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="lg:col-span-7 space-y-4"
-          >
-            {contactMethods.map((method, idx) => (
-              method.href ? (
-                <a 
-                  key={idx}
-                  href={method.href}
+            {/* Resume download */}
+            {resumeUrl && (
+              <motion.div {...fadeUp(0.25)}>
+                <a
+                  href={downloadUrl}
+                  download="Resume.pdf"
                   target="_blank"
                   rel="noreferrer"
-                  className={`group flex items-center justify-between p-4 border rounded-xl transition-all duration-200 hover:-translate-y-0.5 ${method.color}`}
+                  className="group inline-flex items-center gap-3 px-6 py-3.5 rounded-2xl font-semibold text-sm transition-all duration-300 border border-accent/30 bg-accent/8 text-accent hover:bg-accent hover:text-bg hover:border-accent hover:shadow-lg hover:shadow-accent/20"
                 >
-                  <div className="flex items-center gap-4 min-w-0">
-                    <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-bg border border-line/40 text-accent group-hover:scale-105 transition-transform shrink-0">
-                      {method.icon}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-[10px] text-ink-muted/60 uppercase font-mono tracking-wider font-bold">{method.label}</p>
-                      <p className="text-sm sm:text-base font-semibold text-ink group-hover:text-accent transition-colors truncate">{method.value}</p>
-                    </div>
-                  </div>
-                  {method.action ? method.action : (
-                    <ArrowRight size={14} className="text-ink-muted/50 group-hover:text-accent group-hover:translate-x-0.5 transition-all shrink-0" />
-                  )}
+                  <Download size={16} className="group-hover:scale-110 transition-transform" />
+                  Download Resume
+                  <ArrowUpRight size={14} className="ml-auto opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
                 </a>
-              ) : (
-                <div 
-                  key={idx}
-                  className={`flex items-center p-4 border rounded-xl ${method.color}`}
-                >
-                  <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-bg border border-line/40 text-accent shrink-0 mr-4">
-                    {method.icon}
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-ink-muted/60 uppercase font-mono tracking-wider font-bold">{method.label}</p>
-                    <p className="text-sm sm:text-base font-semibold text-ink">{method.value}</p>
-                  </div>
-                </div>
-              )
+              </motion.div>
+            )}
+          </div>
+
+          {/* ── RIGHT — contact cards ── */}
+          <div className="lg:col-span-7 space-y-3">
+            {contactCards.map((card, i) => (
+              <ContactCard key={i} {...card} delay={0.08 + i * 0.07} />
             ))}
-          </motion.div>
+          </div>
 
         </div>
       </div>
