@@ -10,6 +10,7 @@ export const Contact = () => {
   const [profile, setProfile] = useState(null);
   const [resumeUrl, setResumeUrl] = useState('/resume.pdf');
   const [openToWork, setOpenToWork] = useState(true);
+  const [openToWorkText, setOpenToWorkText] = useState('Available for internships');
   const [availableFor, setAvailableFor] = useState([
     'Internships',
     'Freelance projects',
@@ -30,6 +31,7 @@ export const Contact = () => {
           setProfile(data);
           if (data.resume_url) setResumeUrl(data.resume_url);
           if (data.open_to_work !== undefined) setOpenToWork(data.open_to_work);
+          if (data.open_to_work_text) setOpenToWorkText(data.open_to_work_text);
           if (data.available_for && data.available_for.length > 0) {
             setAvailableFor(data.available_for);
           }
@@ -129,13 +131,15 @@ export const Contact = () => {
             </p>
 
             {openToWork && (
-              <div className="border border-accent/20 bg-accent/5 backdrop-blur-md inline-flex items-center space-x-3 px-4.5 py-2.5 rounded-full mb-10 shadow-sm animate-pulse-subtle">
-                <span className="relative flex h-2 w-2">
+              <div className="border border-green-500/25 bg-gradient-to-r from-green-500/5 to-accent/5 backdrop-blur-md inline-flex items-center space-x-3.5 px-5 py-2.5 rounded-2xl mb-10 shadow-sm shadow-green-500/5 hover:border-green-500/40 transition-colors duration-300">
+                <span className="relative flex h-2.5 w-2.5">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
                 </span>
-                <span className="text-xs font-mono font-bold tracking-wide uppercase text-ink">
-                  Available for internships &middot; {new Date().getFullYear()}
+                <span className="text-xs font-mono font-bold tracking-wide uppercase text-ink flex items-center gap-1.5">
+                  <span>{openToWorkText}</span>
+                  <span className="text-ink-muted/50">&middot;</span>
+                  <span className="text-accent">{new Date().getFullYear()}</span>
                 </span>
               </div>
             )}

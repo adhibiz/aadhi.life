@@ -605,19 +605,35 @@ export const ProfileEditor = ({ showToast }) => {
           <div className="space-y-6">
             <AdminCard title="Career Open Status">
               <div className="space-y-6">
-                <label className="flex items-start gap-3 p-4 bg-bg-surface border border-line rounded-2xl cursor-pointer hover:bg-bg-hover/20 transition-all select-none">
-                  <input
-                    type="checkbox"
-                    name="open_to_work"
-                    checked={formData.open_to_work || false}
-                    onChange={handleChange}
-                    className="w-5 h-5 accent-accent rounded border-line bg-bg-surface mt-0.5"
-                  />
-                  <div>
-                    <p className="text-sm font-semibold text-ink leading-tight">Open to Work / Internships</p>
-                    <p className="text-xs text-ink-muted mt-1 leading-normal">Adds a live Green availability badge indicator on your Contact/Footer pages.</p>
-                  </div>
-                </label>
+                <div className="p-4 bg-bg-surface border border-line rounded-2xl transition-all space-y-4">
+                  <label className="flex items-start gap-3 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      name="open_to_work"
+                      checked={formData.open_to_work || false}
+                      onChange={handleChange}
+                      className="w-5 h-5 accent-accent rounded border-line bg-bg-surface mt-0.5"
+                    />
+                    <div>
+                      <p className="text-sm font-semibold text-ink leading-tight">Open to Work / Internships</p>
+                      <p className="text-xs text-ink-muted mt-1 leading-normal">Adds a live Green availability badge indicator on your Contact/Footer pages.</p>
+                    </div>
+                  </label>
+
+                  {formData.open_to_work && (
+                    <div className="pl-8 pt-2 border-t border-line/40">
+                      <label className="block text-xs font-bold text-ink-muted uppercase tracking-wider mb-2">Availability Badge Text</label>
+                      <input
+                        type="text"
+                        name="open_to_work_text"
+                        value={formData.open_to_work_text || ''}
+                        onChange={handleChange}
+                        className="w-full bg-bg border border-line rounded-xl px-4 py-2.5 text-ink focus:border-accent focus:outline-none transition-colors text-sm"
+                        placeholder="e.g. Available for internships"
+                      />
+                    </div>
+                  )}
+                </div>
 
                 <div>
                   <label className="block text-xs font-bold text-ink-muted uppercase tracking-wider mb-3">Available For Roles:</label>
