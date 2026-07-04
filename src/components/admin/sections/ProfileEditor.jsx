@@ -507,6 +507,67 @@ export const ProfileEditor = ({ showToast }) => {
                 </div>
               </div>
             </AdminCard>
+            <AdminCard title="Hero Mockup IDE Tech Stack (stack.js)">
+              <p className="text-xs text-ink-muted mb-4">Customize the array contents shown in the interactive IDE window's <code>stack.js</code> tab.</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-ink-muted uppercase tracking-wider mb-2">Languages (comma-separated)</label>
+                  <input
+                    type="text"
+                    name="hero_languages_raw"
+                    value={formData.hero_languages ? formData.hero_languages.join(', ') : ''}
+                    onChange={(e) => {
+                      const arr = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
+                      setFormData(prev => ({ ...prev, hero_languages: arr }));
+                    }}
+                    className="w-full bg-bg-surface border border-line rounded-xl px-4 py-2.5 text-ink focus:border-accent focus:outline-none transition-colors text-sm"
+                    placeholder="e.g. C++, C#, Rust, JS"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-ink-muted uppercase tracking-wider mb-2">Engines (comma-separated)</label>
+                  <input
+                    type="text"
+                    name="hero_engines_raw"
+                    value={formData.hero_engines ? formData.hero_engines.join(', ') : ''}
+                    onChange={(e) => {
+                      const arr = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
+                      setFormData(prev => ({ ...prev, hero_engines: arr }));
+                    }}
+                    className="w-full bg-bg-surface border border-line rounded-xl px-4 py-2.5 text-ink focus:border-accent focus:outline-none transition-colors text-sm"
+                    placeholder="e.g. Unreal Engine 5, Unity"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-ink-muted uppercase tracking-wider mb-2">Web Stack (comma-separated)</label>
+                  <input
+                    type="text"
+                    name="hero_web_raw"
+                    value={formData.hero_web ? formData.hero_web.join(', ') : ''}
+                    onChange={(e) => {
+                      const arr = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
+                      setFormData(prev => ({ ...prev, hero_web: arr }));
+                    }}
+                    className="w-full bg-bg-surface border border-line rounded-xl px-4 py-2.5 text-ink focus:border-accent focus:outline-none transition-colors text-sm"
+                    placeholder="e.g. React, Tailwind, Node.js"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-ink-muted uppercase tracking-wider mb-2">Systems concepts (comma-separated)</label>
+                  <input
+                    type="text"
+                    name="hero_systems_raw"
+                    value={formData.hero_systems ? formData.hero_systems.join(', ') : ''}
+                    onChange={(e) => {
+                      const arr = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
+                      setFormData(prev => ({ ...prev, hero_systems: arr }));
+                    }}
+                    className="w-full bg-bg-surface border border-line rounded-xl px-4 py-2.5 text-ink focus:border-accent focus:outline-none transition-colors text-sm"
+                    placeholder="e.g. Multithreading, Memory Management"
+                  />
+                </div>
+              </div>
+            </AdminCard>
           </div>
         )}
 

@@ -55,6 +55,11 @@ export const Hero = () => {
   const heroCodeFocus = profile?.focus_area || 'Unreal Engine 5, Systems, React';
   const heroCodeTask = profile?.hero_code_task || 'Creating impact';
 
+  const heroLanguages = profile?.hero_languages || ["C++", "C#", "Rust", "JS"];
+  const heroEngines = profile?.hero_engines || ["Unreal Engine 5", "Unity"];
+  const heroWeb = profile?.hero_web || ["React", "Tailwind", "Node.js"];
+  const heroSystems = profile?.hero_systems || ["Multithreading", "Memory Management"];
+
   const files = [
     { name: 'profile.json', icon: <Braces className="w-3.5 h-3.5 text-yellow-500" /> },
     { name: 'stack.js', icon: <FileCode className="w-3.5 h-3.5 text-blue-400" /> },
@@ -130,13 +135,13 @@ export const Hero = () => {
         return (
           <div className="space-y-1 font-mono text-xs md:text-sm text-[#c9d1d9] leading-relaxed">
             <div><span className="text-[#ff7b72]">const</span> <span className="text-[#d2a6ff]">developer</span> = <span className="text-[#ff7b72]">{'{'}</span></div>
-            <div className="pl-4">languages: <span className="text-[#ff7b72]">[</span><span className="text-[#a5d6ff]">"C++"</span>, <span className="text-[#a5d6ff]">"C#"</span>, <span className="text-[#a5d6ff]">"Rust"</span>, <span className="text-[#a5d6ff]">"JS"</span><span className="text-[#ff7b72]">]</span>,</div>
-            <div className="pl-4">engines: <span className="text-[#ff7b72]">[</span><span className="text-[#a5d6ff]">"Unreal Engine 5"</span>, <span className="text-[#a5d6ff]">"Unity"</span><span className="text-[#ff7b72]">]</span>,</div>
-            <div className="pl-4">web: <span className="text-[#ff7b72]">[</span><span className="text-[#a5d6ff]">"React"</span>, <span className="text-[#a5d6ff]">"Tailwind"</span>, <span className="text-[#a5d6ff]">"Node.js"</span><span className="text-[#ff7b72]">]</span>,</div>
-            <div className="pl-4">systems: <span className="text-[#ff7b72]">[</span><span className="text-[#a5d6ff]">"Multithreading"</span>, <span className="text-[#a5d6ff]">"Memory Management"</span><span className="text-[#ff7b72]">]</span></div>
+            <div className="pl-4">languages: <span className="text-[#ff7b72]">[</span>{heroLanguages.map((l, i) => <span key={i}><span className="text-[#a5d6ff]">"{l}"</span>{i < heroLanguages.length - 1 ? ', ' : ''}</span>)}<span className="text-[#ff7b72]">]</span>,</div>
+            <div className="pl-4">engines: <span className="text-[#ff7b72]">[</span>{heroEngines.map((e, i) => <span key={i}><span className="text-[#a5d6ff]">"{e}"</span>{i < heroEngines.length - 1 ? ', ' : ''}</span>)}<span className="text-[#ff7b72]">]</span>,</div>
+            <div className="pl-4">web: <span className="text-[#ff7b72]">[</span>{heroWeb.map((w, i) => <span key={i}><span className="text-[#a5d6ff]">"{w}"</span>{i < heroWeb.length - 1 ? ', ' : ''}</span>)}<span className="text-[#ff7b72]">]</span>,</div>
+            <div className="pl-4">systems: <span className="text-[#ff7b72]">[</span>{heroSystems.map((s, i) => <span key={i}><span className="text-[#a5d6ff]">"{s}"</span>{i < heroSystems.length - 1 ? ', ' : ''}</span>)}<span className="text-[#ff7b72]">]</span></div>
             <div><span className="text-[#ff7b72]">{'}'}</span>;</div>
             <div className="pt-3 text-[#8b949e] font-mono italic">// Logging primary skills</div>
-            <div><span className="text-[#79c0ff]">console</span>.<span className="text-[#d2a6ff]">log</span>(developer.engines[0]); <span className="text-[#8b949e]">// Output: "Unreal Engine 5"</span></div>
+            <div><span className="text-[#79c0ff]">console</span>.<span className="text-[#d2a6ff]">log</span>(developer.engines[0]); <span className="text-[#8b949e]">// Output: "{heroEngines[0] || 'Unreal Engine 5'}"</span></div>
           </div>
         );
       case 'bio.md':
