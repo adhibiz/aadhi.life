@@ -13,15 +13,7 @@ import {
   Layers 
 } from 'lucide-react';
 
-const FALLBACK_SKILLS = [
-  { id: '1', category: 'Game Development', items: ['Unreal Engine 5', 'Blueprint Visual Scripting', 'VR Development (Meta Quest)', 'Level Design', 'Game Packaging'], order: 1 },
-  { id: '2', category: 'Networking and Systems', items: ['Cisco CCNA (certified)', 'OS Installation', 'Android ROM Flashing', 'System Troubleshooting', 'Windows/Linux'], order: 2 },
-  { id: '3', category: 'Programming and Web', items: ['HTML/CSS', 'JavaScript (basic)', 'Python (basic)', 'Git/GitHub'], order: 3 },
-  { id: '4', category: 'AI and Tools', items: ['ChatGPT', 'Claude AI', 'Midjourney (learning)', 'Prompt Engineering'], order: 4 },
-  { id: '5', category: 'Content and Design', items: ['Instagram Reels', 'Video Editing', 'Canva', 'Content Strategy'], order: 5 },
-  { id: '6', category: 'Leadership and Soft Skills', items: ['Event Organization', 'Public Speaking', 'Student Mentoring', 'Community Building', 'Self-Learning'], order: 6 },
-  { id: '7', category: 'Currently Learning', items: ['Communication Skills', 'Content Creation Strategy', 'Startup Fundamentals'], is_learning: true, order: 7 }
-];
+
 
 export const Skills = () => {
   const [skills, setSkills] = useState([]);
@@ -29,14 +21,14 @@ export const Skills = () => {
 
   useEffect(() => {
     if (!db) {
-      setSkills(FALLBACK_SKILLS);
+      setSkills([]);
       setLoading(false);
       return;
     }
 
     const unsubscribe = onSnapshot(collection(db, 'skills'), (snapshot) => {
       if (snapshot.empty) {
-        setSkills(FALLBACK_SKILLS);
+        setSkills([]);
       } else {
         const docs = [];
         snapshot.forEach(doc => docs.push({ id: doc.id, ...doc.data() }));
@@ -47,7 +39,7 @@ export const Skills = () => {
       setLoading(false);
     }, (error) => {
       console.error("Skills fetch error:", error);
-      setSkills(FALLBACK_SKILLS);
+      setSkills([]);
       setLoading(false);
     });
 

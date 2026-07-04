@@ -3,23 +3,10 @@ import { motion } from 'framer-motion';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
 
-const FALLBACK_NOW = {
- currently: "Final year B.Tech IT at Saveetha Engineering College, Chennai.",
- building: [
- "Campus Digital Twin (Unreal Engine 5)",
- "Lost Lab — VR escape room"
- ],
- learning: [
- "Communication skills and public speaking",
- "Content creation strategy for documenting my journey"
- ],
- listening_to: "Audiobooks focused on business, startup fundamentals, and mindset development.",
- goal: "Build toward founding a tech company. Find my direction and the right problems to solve.",
- last_updated: "June 2025"
-};
+
 
 export default function Now() {
- const [nowData, setNowData] = useState(FALLBACK_NOW);
+ const [nowData, setNowData] = useState(null);
  const [loading, setLoading] = useState(true);
 
  useEffect(() => {
@@ -45,6 +32,22 @@ export default function Now() {
 
  fetchNow();
  }, []);
+
+ if (loading) {
+  return (
+   <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-20 min-h-screen flex items-center justify-center">
+   <div className="text-ink-muted font-mono animate-pulse">Loading...</div>
+   </div>
+  );
+ }
+
+ if (!nowData) {
+  return (
+   <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-20 min-h-screen flex items-center justify-center">
+   <div className="text-ink-muted font-mono">No updates posted yet.</div>
+   </div>
+  );
+ }
 
  return (
  <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-20 min-h-screen">

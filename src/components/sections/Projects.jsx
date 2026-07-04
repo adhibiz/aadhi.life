@@ -6,52 +6,7 @@ import { ProjectModal } from '../ui/ProjectModal';
 import { Badge } from '../ui/Badge';
 import { ArrowRight, ExternalLink } from 'lucide-react';
 
-const FALLBACK_PROJECTS = [
-  {
-    id: '1',
-    title: "Saveetha Campus Digital Twin",
-    status: "In Progress",
-    team: "Solo",
-    short_desc: "A massive undertaking to recreate the entire Saveetha Engineering College campus in Unreal Engine 5.",
-    tech: ["UE5.5", "Blueprint", "Nanite", "Lumen"],
-    full_desc: "A massive undertaking to recreate the entire Saveetha Engineering College campus in Unreal Engine 5. Leveraging Nanite for high-fidelity geometry and Lumen for dynamic global illumination.",
-    why_built: "To test the limits of UE5's architectural visualization capabilities and provide an interactive exploration tool for students and visitors.",
-    order: 1
-  },
-  {
-    id: '2',
-    title: "Lost Lab — VR Escape Room",
-    status: "In Progress",
-    team: "Solo",
-    short_desc: "An immersive VR escape room for the Meta Quest with physics-based puzzles.",
-    tech: ["UE5.5", "Meta Quest VR", "Blueprint"],
-    full_desc: "An immersive virtual reality escape room experience designed specifically for the Meta Quest headset. Players must solve physics-based puzzles and interact with complex machinery to escape.",
-    why_built: "VR development requires a completely different approach to user experience and optimization. I wanted to master VR interaction mechanics in Unreal Engine.",
-    order: 2
-  },
-  {
-    id: '3',
-    title: "Smart QR Canteen Booking",
-    status: "Concept",
-    team: "Solo",
-    short_desc: "Pre-booking system for college canteen via QR scanning and digital tokens.",
-    tech: ["QR Code", "Web App", "App integration"],
-    full_desc: "A conceptual application aimed at solving the long queues in college canteens by allowing pre-booking via QR code scanning and digital tokens.",
-    why_built: "Born out of the frustration of wasting lunch breaks waiting in lines.",
-    order: 3
-  },
-  {
-    id: '4',
-    title: "UE5 Blueprint Workshop",
-    status: "Completed",
-    team: "Solo Facilitator",
-    short_desc: "A workshop series teaching game logic visually using Unreal Engine's Blueprint system.",
-    tech: ["UE5.5", "Blueprint", "Education"],
-    full_desc: "A comprehensive workshop series designed to teach absolute beginners how to program game logic visually using Unreal Engine's Blueprint system.",
-    why_built: "I realized the best way to solidify my own knowledge was to teach it to others.",
-    order: 4
-  }
-];
+
 
 const statusVariant = (status) => {
   const s = (status || '').toLowerCase();
@@ -209,14 +164,14 @@ export const Projects = () => {
 
   useEffect(() => {
     if (!db) {
-      setProjects(FALLBACK_PROJECTS);
+      setProjects([]);
       setLoading(false);
       return;
     }
 
     const unsubscribe = onSnapshot(collection(db, 'projects'), (snapshot) => {
       if (snapshot.empty) {
-        setProjects(FALLBACK_PROJECTS);
+        setProjects([]);
       } else {
         const docs = [];
         snapshot.forEach(doc => {
@@ -231,7 +186,7 @@ export const Projects = () => {
       setLoading(false);
     }, (error) => {
       console.error("Projects fetch error:", error);
-      setProjects(FALLBACK_PROJECTS);
+      setProjects([]);
       setLoading(false);
     });
 

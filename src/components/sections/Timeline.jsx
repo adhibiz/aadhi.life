@@ -4,17 +4,7 @@ import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { ChevronDown, GitCommit, GitBranch, GitMerge, GitPullRequest } from 'lucide-react';
 
-const FALLBACK_TIMELINE = [
-  { id: '1', year: "2013", title: "Left school after 8th standard", description: "Chose a different path. Enrolled in ITI to get hands-on experience." },
-  { id: '2', year: "2015", title: "Discovered YouTube self-learning", description: "A senior showed me YouTube. That opened a doorway to software and global knowledge." },
-  { id: '3', year: "2016", title: "Father's laptop — started building", description: "Taught myself OS installation, custom Android ROMs, and system troubleshooting." },
-  { id: '4', year: "2018", title: "Diploma in Computer Engineering", description: "Only student in the batch for 3 years. Leveraged self-learning to master computing topics." },
-  { id: '5', year: "2021", title: "B.Tech at Saveetha, Chennai", description: "Lateral entry. Left Tenkasi with big dreams and no connections." },
-  { id: '6', year: "2022", title: "Broke stage fear, built network", description: "Joined Game and App Dev Community. Found peers to co-build tools." },
-  { id: '7', year: "2023", title: "Became Joint Secretary", description: "Started leading workshops. Discovered that teaching is how I learn best." },
-  { id: '8', year: "2024", title: "Campus Digital Twin in UE5", description: "Built an immersive 3D digital model of the Saveetha campus in Unreal Engine 5." },
-  { id: '9', year: "2025", title: "Final year — building toward a company", description: "Developing leadership, project management, and final engineering releases." }
-];
+
 
 export const Timeline = () => {
   const [entries, setEntries] = useState([]);
@@ -23,7 +13,7 @@ export const Timeline = () => {
 
   useEffect(() => {
     if (!db) {
-      setEntries(FALLBACK_TIMELINE);
+      setEntries([]);
       setLoading(false);
       return;
     }
@@ -31,7 +21,7 @@ export const Timeline = () => {
     const q = query(collection(db, 'timeline'), orderBy('order', 'asc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       if (snapshot.empty) {
-        setEntries(FALLBACK_TIMELINE);
+        setEntries([]);
       } else {
         const docs = [];
         snapshot.forEach(doc => docs.push({ id: doc.id, ...doc.data() }));
@@ -40,7 +30,7 @@ export const Timeline = () => {
       setLoading(false);
     }, (error) => {
       console.error("Timeline fetch error:", error);
-      setEntries(FALLBACK_TIMELINE);
+      setEntries([]);
       setLoading(false);
     });
 

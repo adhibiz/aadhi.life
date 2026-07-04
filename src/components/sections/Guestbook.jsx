@@ -5,10 +5,7 @@ import { db } from '../../firebase/config';
 import { Button } from '../ui/Button';
 import { Send, CheckCircle2, MessageSquare, AlertTriangle } from 'lucide-react';
 
-const FALLBACK_MESSAGES = [
-  { id: '1', name: 'Marcus K.', message: 'Minimalist builder aesthetics are top tier. Really clean layout lines and beautiful typography scale.', date_str: 'Jun 29, 2026' },
-  { id: '2', name: 'Sarah (dev.sh)', message: 'Awesome site Aadhi! The cursor trail is so smooth, I literally played with it for a full minute before reading.', date_str: 'Jun 30, 2026' }
-];
+
 
 /* Generate deterministic HSL colors based on the sender's name */
 const getNameColor = (name) => {
@@ -41,7 +38,7 @@ export const Guestbook = () => {
 
   useEffect(() => {
     if (!db) {
-      setMessages(FALLBACK_MESSAGES);
+      setMessages([]);
       setLoading(false);
       return;
     }
@@ -54,7 +51,7 @@ export const Guestbook = () => {
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       if (snapshot.empty) {
-        setMessages(FALLBACK_MESSAGES);
+        setMessages([]);
       } else {
         const docs = [];
         snapshot.forEach(doc => {
@@ -68,7 +65,7 @@ export const Guestbook = () => {
       setLoading(false);
     }, (error) => {
       console.error("Guestbook fetch error:", error);
-      setMessages(FALLBACK_MESSAGES);
+      setMessages([]);
       setLoading(false);
     });
 
