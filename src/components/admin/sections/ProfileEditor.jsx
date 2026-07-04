@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useDocument } from '../../../hooks/useFirestore';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import { AdminCard } from '../AdminCard';
 import { 
@@ -70,7 +70,16 @@ export const ProfileEditor = ({ showToast }) => {
     setIsSaving(true);
     try {
       const docRef = doc(db, 'site_meta', 'profile');
-      await updateDoc(docRef, formData);
+      
+      // Sanitize undefined fields from formData before saving
+      const cleanedData = {};
+      Object.keys(formData).forEach(key => {
+        if (formData[key] !== undefined) {
+          cleanedData[key] = formData[key];
+        }
+      });
+
+      await setDoc(docRef, cleanedData, { merge: true });
       showToast("Profile saved successfully");
     } catch (error) {
       console.error(error);
