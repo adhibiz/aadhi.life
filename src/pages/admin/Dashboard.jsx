@@ -23,10 +23,11 @@ import { NowPageEditor } from '../../components/admin/sections/NowPageEditor';
 import { ImageGallery } from '../../components/admin/sections/ImageGallery';
 import { Notifications } from '../../components/admin/sections/Notifications';
 import { ContactEditor } from '../../components/admin/sections/ContactEditor';
+import { LoadingEditor } from '../../components/admin/sections/LoadingEditor';
 import { 
   LayoutDashboard, User, Folder, FileText, Layers, Clock, 
   MessageSquare, Radio, LogOut, Menu, ExternalLink, X,
-  Check, Trash2, Image, Bell, Sun, Moon, ArrowRight, Activity, Plus, Phone
+  Check, Trash2, Image, Bell, Sun, Moon, ArrowRight, Activity, Plus, Phone, Clapperboard
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -114,6 +115,7 @@ export default function Dashboard() {
     { id: 'now', label: 'Now Page', icon: <Radio size={18} /> },
     { id: 'gallery', label: 'Image Gallery', icon: <Image size={18} /> },
     { id: 'contact', label: 'Contact Page', icon: <Phone size={18} /> },
+    { id: 'loading', label: 'Loading Screen', icon: <Clapperboard size={18} /> },
     { 
       id: 'notifications', 
       label: 'Notifications', 
@@ -380,11 +382,12 @@ export default function Dashboard() {
             {activeTab === 'now' && <NowPageEditor showToast={showToast} />}
             {activeTab === 'gallery' && <ImageGallery />}
             {activeTab === 'contact' && <ContactEditor showToast={showToast} />}
+            {activeTab === 'loading' && <LoadingEditor showToast={showToast} />}
             {activeTab === 'notifications' && <Notifications showToast={showToast} />}
             
             {![
               'overview', 'profile', 'projects', 'blog', 
-              'skills', 'timeline', 'guestbook', 'now', 'gallery', 'contact', 'notifications'
+              'skills', 'timeline', 'guestbook', 'now', 'gallery', 'contact', 'loading', 'notifications'
             ].includes(activeTab) && (
               <div className="text-center py-20 text-ink-muted">
                 <h2 className="text-2xl font-bold text-ink mb-2 capitalize">{activeTab} Management</h2>
