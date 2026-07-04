@@ -7,33 +7,7 @@ import { ArrowLeft, Heart, Share2, MessageSquare, Clock, Send, Check, Eye } from
 import { FaGithub } from 'react-icons/fa';
 import { marked } from 'marked';
 
-const FALLBACK_POST = {
-  id: '1',
-  slug: 'why-i-left-school',
-  title: 'Why I Left School at 8th Standard and Never Looked Back',
-  category: 'Personal',
-  read_time: '5 min',
-  published_date: 'Jun 28, 2026',
-  content: `
-Leaving traditional education wasn't an act of rebellion; it was an act of survival for my curiosity. The classroom felt like a sterile environment where knowledge was memorized rather than understood.
 
-I wanted to know *how* things worked. How a motor spun, how software communicated with hardware, how logic could be compiled into action. The standard curriculum didn't offer that.
-
-## The Self-Taught Path
-
-My real classroom became the internet. YouTube tutorials, open-source documentation, and trial-and-error became my teachers. 
-
-When my father got me a laptop in 2018, it changed everything. I wasn't just consuming content anymore; I was building. I flashed custom Android ROMs, broke operating systems, and learned how to fix them.
-
-## What I Learned
-
-1. **Failure is data.** When something breaks, it tells you exactly what not to do next time.
-2. **Curiosity is the best curriculum.** If you want to learn something, you will find a way.
-3. **No one asks for your grades when you can build the product.** 
-
-This journey hasn't been easy, but it has been mine. I wouldn't trade it for any classroom in the world.
-`
-};
 
 export default function BlogPost() {
   const { id } = useParams();
@@ -63,15 +37,10 @@ export default function BlogPost() {
         const data = docSnap.data();
         setPost({ id: docSnap.id, ...data });
       } else {
-        if (id === FALLBACK_POST.slug) {
-          setPost(FALLBACK_POST);
-        } else {
-          setPost(null);
-        }
+        setPost(null);
       }
     } catch (error) {
       console.error("Error fetching post:", error);
-      if (id === FALLBACK_POST.slug) setPost(FALLBACK_POST);
     } finally {
       setLoading(false);
     }

@@ -5,35 +5,7 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { Calendar, Clock, ArrowRight } from 'lucide-react';
 
-const FALLBACK_POSTS = [
-  {
-    id: '1',
-    slug: 'why-i-left-school',
-    title: 'Why I Left School at 8th Standard and Never Looked Back',
-    category: 'Personal',
-    read_time: '5 min',
-    published_date: 'Jun 28, 2026',
-    excerpt: 'The traditional education system felt disconnected from how things actually work. Taking control of my own learning path was the most terrifying and rewarding decision of my life.'
-  },
-  {
-    id: '2',
-    slug: 'how-i-learned-ue5',
-    title: 'How I Learned Unreal Engine 5 Without a Teacher',
-    category: 'Tech',
-    read_time: '7 min',
-    published_date: 'May 14, 2026',
-    excerpt: 'Unreal Engine 5 is intimidating. Here is the exact roadmap, YouTube channels, and project-based approach I used to go from absolute beginner to building a Digital Twin.'
-  },
-  {
-    id: '3',
-    slug: 'workshop-communication',
-    title: 'What Running a Workshop Taught Me About Communication',
-    category: 'Leadership',
-    read_time: '4 min',
-    published_date: 'Apr 02, 2026',
-    excerpt: 'I used to have severe stage fright. Standing in front of dozens of students to teach them UE5 Blueprints changed how I think about knowledge sharing and leadership.'
-  }
-];
+
 
 const CATEGORIES = ['All', 'Personal', 'Tech', 'Leadership'];
 
@@ -53,7 +25,7 @@ export default function Blog() {
         const snapshot = await getDocs(q);
         
         if (snapshot.empty) {
-          setPosts(FALLBACK_POSTS);
+          setPosts([]);
         } else {
           const fetchedPosts = [];
           snapshot.forEach(doc => fetchedPosts.push({ id: doc.id, ...doc.data() }));
@@ -66,7 +38,7 @@ export default function Blog() {
         }
       } catch (error) {
         console.error("Error fetching blog posts:", error);
-        setPosts(FALLBACK_POSTS);
+        setPosts([]);
       } finally {
         setLoading(false);
       }
