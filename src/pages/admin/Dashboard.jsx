@@ -114,8 +114,6 @@ export default function Dashboard() {
     },
     { id: 'now', label: 'Now Page', icon: <Radio size={18} /> },
     { id: 'gallery', label: 'Image Gallery', icon: <Image size={18} /> },
-    { id: 'contact', label: 'Contact Page', icon: <Phone size={18} /> },
-    { id: 'loading', label: 'Loading Screen', icon: <Clapperboard size={18} /> },
     { 
       id: 'notifications', 
       label: 'Notifications', 
@@ -130,9 +128,6 @@ export default function Dashboard() {
       {/* Branding Header */}
       <div className="p-6 border-b border-line/40 shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-accent to-accent-light flex items-center justify-center text-bg font-display font-black text-lg select-none shadow-md shadow-accent/10">
-            A
-          </div>
           <div>
             <h1 className="text-ink font-display font-bold text-base leading-none">aadhi.life</h1>
             <span className="text-[9px] font-mono text-accent uppercase tracking-wider font-semibold">CMS Panel</span>
@@ -381,13 +376,11 @@ export default function Dashboard() {
             {activeTab === 'guestbook' && <GuestbookEditor showToast={showToast} />}
             {activeTab === 'now' && <NowPageEditor showToast={showToast} />}
             {activeTab === 'gallery' && <ImageGallery />}
-            {activeTab === 'contact' && <ContactEditor showToast={showToast} />}
-            {activeTab === 'loading' && <LoadingEditor showToast={showToast} />}
             {activeTab === 'notifications' && <Notifications showToast={showToast} />}
             
             {![
               'overview', 'profile', 'projects', 'blog', 
-              'skills', 'timeline', 'guestbook', 'now', 'gallery', 'contact', 'loading', 'notifications'
+              'skills', 'timeline', 'guestbook', 'now', 'gallery', 'notifications'
             ].includes(activeTab) && (
               <div className="text-center py-20 text-ink-muted">
                 <h2 className="text-2xl font-bold text-ink mb-2 capitalize">{activeTab} Management</h2>

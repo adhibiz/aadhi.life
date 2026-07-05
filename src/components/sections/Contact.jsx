@@ -213,42 +213,6 @@ export const Contact = () => {
               )}
             </AnimatePresence>
 
-            {/* Availability tags */}
-            <motion.div {...fadeUp(0.15)}>
-              <p className="text-[10px] font-mono font-bold text-ink-muted/50 uppercase tracking-[0.2em] mb-4">Availability Scope</p>
-              <div className="flex flex-wrap gap-2">
-                {availableFor.map((item, i) => (
-                  <motion.span
-                    key={i}
-                    initial={{ opacity: 0, scale: 0.85 }}
-                    whileInView={{ opacity: 1, scale: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: 0.18 + i * 0.06, duration: 0.35 }}
-                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[11px] font-semibold border border-accent/20 bg-accent/5 text-ink-muted hover:text-accent hover:border-accent/40 hover:bg-accent/10 transition-all duration-200 cursor-default"
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-accent/60 shrink-0" />
-                    {item}
-                  </motion.span>
-                ))}
-              </div>
-            </motion.div>
-
-            {/* Resume download */}
-            {resumeUrl && (
-              <motion.div {...fadeUp(0.25)}>
-                <a
-                  href={downloadUrl}
-                  download="Resume.pdf"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="group inline-flex items-center gap-3 px-6 py-3.5 rounded-2xl font-semibold text-sm transition-all duration-300 border border-accent/30 bg-accent/8 text-accent hover:bg-accent hover:text-bg hover:border-accent hover:shadow-lg hover:shadow-accent/20"
-                >
-                  <Download size={16} className="group-hover:scale-110 transition-transform" />
-                  Download Resume
-                  <ArrowUpRight size={14} className="ml-auto opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
-                </a>
-              </motion.div>
-            )}
           </div>
 
           {/* ── RIGHT — contact cards ── */}

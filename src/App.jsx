@@ -5,7 +5,6 @@ import { SpeedInsights } from '@vercel/speed-insights/react';
 import { ThemeProvider } from './context/ThemeContext';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
-import { LoadingScreen } from './components/ui/LoadingScreen';
 import { PageTransition } from './components/ui/PageTransition';
 import Home from './pages/Home';
 import Blog from './pages/Blog';
@@ -67,7 +66,6 @@ const AppContent = () => {
 function App() {
  return (
  <ThemeProvider>
-  <LoadingScreen />
   <Router>
   <AppContent />
   </Router>

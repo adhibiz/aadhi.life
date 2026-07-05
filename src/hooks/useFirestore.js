@@ -74,6 +74,8 @@ export const useCollection = (collectionName, queryConstraints = []) => {
  const [loading, setLoading] = useState(true);
  const [error, setError] = useState(null);
 
+ const queryKey = queryConstraints.map(c => c?.toString?.() || '').join(',');
+
  useEffect(() => {
  if (!db) return;
 
@@ -93,7 +95,7 @@ export const useCollection = (collectionName, queryConstraints = []) => {
  });
 
  return () => unsubscribe();
- }, [collectionName, JSON.stringify(queryConstraints)]);
+ }, [collectionName, queryKey]);
 
  return { documents, loading, error };
 };
