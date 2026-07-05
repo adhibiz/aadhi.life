@@ -160,7 +160,7 @@ export const ProjectModal = ({ isOpen, onClose, project }) => {
             ══════════════════════════════════ */}
             <div className="px-6 sm:px-9 -mt-10 relative z-10 mb-2 flex items-end justify-between gap-4">
               <div className="flex-1 min-w-0">
-                <h2 className="text-2xl sm:text-3.5xl font-display font-bold text-white tracking-tight leading-tight drop-shadow-md">
+                <h2 className="text-2xl sm:text-3.5xl font-display font-bold text-white tracking-tight leading-tight drop-shadow-md text-balance">
                   {project.title}
                 </h2>
                 {/* Meta details */}
