@@ -4,6 +4,7 @@ import { db } from '../../../firebase/config';
 import { useCollection } from '../../../hooks/useFirestore';
 import { AdminCard } from '../AdminCard';
 import { ConfirmDialog } from '../ConfirmDialog';
+import { CommentModeration } from './CommentModeration';
 import { FileUploader } from '../../ui/FileUploader';
 import { deleteFile } from '../../../cloudinary/upload';
 import { 
@@ -57,12 +58,9 @@ export const BlogEditor = ({ showToast }) => {
   const [autoSaveStatus, setAutoSaveStatus] = useState('Saved');
   
   // Custom CMS Editor States
-  const [editorTab, setEditorTab] = useState('write'); // 'write' | 'settings' | 'preview'
+  const [editorTab, setEditorTab] = useState('write'); // 'write' | 'settings' | 'preview' | 'comments'
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showVersionHistory, setShowVersionHistory] = useState(false);
-  const [searchComment, setSearchComment] = useState('');
-  const [sortCommentOrder, setSortCommentOrder] = useState('newest');
-  const [replyInputs, setReplyInputs] = useState({});
   const [confirmDelete, setConfirmDelete] = useState({ isOpen: false, id: null, publicId: null });
   
   // Post List Filter States
@@ -189,7 +187,9 @@ export const BlogEditor = ({ showToast }) => {
       if (formData.id) {
         // Edit
         const docRef = doc(db, 'blog_posts', formData.id);
-        const { id, ...dataToSave } = formData;
+        // Counters and comments are written by visitors while the editor is open;
+        // leave them out so saving doesn't overwrite newer values.
+        const { id, views, likes, shares, comments, ...dataToSave } = formData;
         await updateDoc(docRef, dataToSave);
         showToast('Changes saved successfully');
       } else {
@@ -251,71 +251,6 @@ export const BlogEditor = ({ showToast }) => {
   const charCount = textBody.length;
   const wordCount = textBody.split(/\s+/).filter(Boolean).length;
   const readTimeEst = `${Math.max(1, Math.ceil(wordCount / 200))} min`;
-
-  // Comment Actions
-  const handlePinComment = async (commentId) => {
-    const updatedComments = formData.comments.map(c => 
-      c.id === commentId ? { ...c, pinned: !c.pinned } : c
-    );
-    setFormData(prev => ({ ...prev, comments: updatedComments }));
-    setIsDirty(true);
-    setAutoSaveStatus('Unsaved Changes');
-  };
-
-  const handleFeatureComment = async (commentId) => {
-    const updatedComments = formData.comments.map(c => 
-      c.id === commentId ? { ...c, featured: !c.featured } : c
-    );
-    setFormData(prev => ({ ...prev, comments: updatedComments }));
-    setIsDirty(true);
-    setAutoSaveStatus('Unsaved Changes');
-  };
-
-  const handleDeleteComment = async (commentId) => {
-    const updatedComments = formData.comments.filter(c => c.id !== commentId);
-    setFormData(prev => ({ ...prev, comments: updatedComments }));
-    setIsDirty(true);
-    setAutoSaveStatus('Unsaved Changes');
-  };
-
-  const handleSendReply = (commentId) => {
-    const replyText = replyInputs[commentId];
-    if (!replyText?.trim()) return;
-
-    const updatedComments = formData.comments.map(c => {
-      if (c.id === commentId) {
-        return {
-          ...c,
-          replies: [
-            ...(c.replies || []),
-            {
-              id: `r-${Date.now()}`,
-              name: 'Aadhi (Author)',
-              comment: replyText,
-              date: 'Just now'
-            }
-          ]
-        };
-      }
-      return c;
-    });
-
-    setFormData(prev => ({ ...prev, comments: updatedComments }));
-    setReplyInputs(prev => ({ ...prev, [commentId]: '' }));
-    setIsDirty(true);
-    setAutoSaveStatus('Unsaved Changes');
-  };
-
-  const filteredComments = (formData?.comments || [])
-    .filter(c => 
-      c.name.toLowerCase().includes(searchComment.toLowerCase()) ||
-      c.comment.toLowerCase().includes(searchComment.toLowerCase())
-    )
-    .sort((a, b) => {
-      if (a.pinned && !b.pinned) return -1;
-      if (!a.pinned && b.pinned) return 1;
-      return 0;
-    });
 
   return (
     <div className="space-y-6 font-body">
@@ -541,6 +476,14 @@ export const BlogEditor = ({ showToast }) => {
             >
               <Eye size={14} /> Live Blog Preview
             </button>
+            {formData.id && (
+              <button
+                onClick={() => setEditorTab('comments')}
+                className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all ${editorTab === 'comments' ? 'bg-accent/10 text-accent border border-accent/20' : 'text-ink-muted hover:text-ink hover:bg-bg-surface/50 border border-transparent'}`}
+              >
+                <MessageSquare size={14} /> Comments
+              </button>
+            )}
           </div>
 
           {/* WORKSPACE CONTENT RENDER */}
@@ -696,6 +639,10 @@ export const BlogEditor = ({ showToast }) => {
                   </AdminCard>
                 </div>
               </div>
+            )}
+
+            {editorTab === 'comments' && formData.id && (
+              <CommentModeration postId={formData.id} showToast={showToast} />
             )}
 
             {editorTab === 'preview' && (

@@ -39,17 +39,57 @@ service cloud.firestore {
     // BLOG POSTS
     //   - Public can read published posts only
     //   - Admin can read all (including drafts) and write
+    //   - Visitors may bump exactly one counter (views/likes/shares) by +1
+    //     on a published post; nothing else on the post is writable
     // ─────────────────────────────────────────────────────────────────────
-    match /blog_posts/{doc} {
+    function bumpsOnly(field) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly([field])
+          && request.resource.data[field] == resource.data.get(field, 0) + 1;
+    }
+
+    match /blog_posts/{postId} {
       allow read: if resource.data.published == true || isAdmin();
-      allow write: if isAdmin();
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin()
+                    || (resource.data.published == true
+                        && (bumpsOnly('views') || bumpsOnly('likes') || bumpsOnly('shares')));
+
+      // Visitor comments: create-only, held for moderation (approved=false).
+      // Public sees approved comments; admin approves, edits or deletes.
+      match /comments/{commentId} {
+        allow read: if resource.data.approved == true || isAdmin();
+        allow create: if get(/databases/$(database)/documents/blog_posts/$(postId)).data.published == true
+                      && request.resource.data.keys().hasOnly(['name', 'comment', 'approved', 'created_at'])
+                      && request.resource.data.approved == false
+                      && request.resource.data.created_at == request.time
+                      && request.resource.data.name is string
+                      && request.resource.data.name.size() > 0
+                      && request.resource.data.name.size() <= 80
+                      && request.resource.data.comment is string
+                      && request.resource.data.comment.size() > 0
+                      && request.resource.data.comment.size() <= 1000;
+        allow update, delete: if isAdmin();
+      }
     }
 
     // ─────────────────────────────────────────────────────────────────────
-    // NOTIFICATIONS (admin-only)
+    // NOTIFICATIONS
+    //   - Visitors can create like/comment notifications (validated shape)
+    //   - Only admin can read, mark read, or delete
     // ─────────────────────────────────────────────────────────────────────
     match /notifications/{doc} {
-      allow read, write: if isAdmin();
+      allow read, update, delete: if isAdmin();
+      allow create: if isAdmin()
+                    || (request.resource.data.keys().hasOnly(['type', 'postTitle', 'postSlug', 'message', 'read', 'created_at'])
+                        && request.resource.data.type in ['like', 'comment']
+                        && request.resource.data.read == false
+                        && request.resource.data.created_at == request.time
+                        && request.resource.data.postTitle is string
+                        && request.resource.data.postTitle.size() <= 200
+                        && request.resource.data.postSlug is string
+                        && request.resource.data.postSlug.size() <= 200
+                        && request.resource.data.message is string
+                        && request.resource.data.message.size() <= 400);
     }
 
     // ─────────────────────────────────────────────────────────────────────
@@ -61,7 +101,9 @@ service cloud.firestore {
     match /guestbook/{doc} {
       allow read: if resource.data.approved == true || isAdmin();
 
-      allow create: if request.resource.data.approved == false
+      allow create: if request.resource.data.keys().hasOnly(['name', 'message', 'approved', 'created_at'])
+                    && request.resource.data.approved == false
+                    && request.resource.data.created_at == request.time
                     && request.resource.data.name is string
                     && request.resource.data.message is string
                     && request.resource.data.name.size() > 0

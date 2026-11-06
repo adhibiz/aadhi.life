@@ -2,6 +2,33 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion, useScroll, useSpring } from 'framer-motion';
 import { collection, query, where, getDocs, updateDoc, doc, increment, addDoc, serverTimestamp } from 'firebase/firestore';
+
+const truncate = (text, max) => (text.length > max ? `${text.substring(0, max)}…` : text);
+
+const formatCommentDate = (ts) => {
+  const date = ts?.toDate ? ts.toDate() : null;
+  if (!date) return '';
+  return date.toLocaleString('en-US', {
+    month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true
+  });
+};
+
+// Approved visitor comments live in blog_posts/{id}/comments; older comments may
+// still sit in the post's legacy `comments` array, so both are shown.
+const toDisplayComment = (snap) => {
+  const data = snap.data();
+  return {
+    id: snap.id,
+    name: data.name,
+    avatar: data.name?.charAt(0).toUpperCase() || '?',
+    comment: data.comment,
+    date: formatCommentDate(data.created_at),
+    pinned: data.pinned === true,
+    featured: data.featured === true,
+    replies: data.replies || [],
+    created_ms: data.created_at?.toMillis ? data.created_at.toMillis() : 0
+  };
+};
 import { db } from '../firebase/config';
 import { ArrowLeft, Heart, Share2, MessageSquare, Clock, Send, Check, Eye } from 'lucide-react';
 import { FaGithub } from 'react-icons/fa';
@@ -18,6 +45,8 @@ export default function BlogPost() {
   const [commentName, setCommentName] = useState('');
   const [commentText, setCommentText] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [commentStatus, setCommentStatus] = useState(null); // 'pending' | 'error' | null
+  const [approvedComments, setApprovedComments] = useState([]);
   const [toc, setToc] = useState([]);
 
   const contentRef = useRef(null);
@@ -49,6 +78,21 @@ export default function BlogPost() {
   useEffect(() => {
     fetchPost();
   }, [id]);
+
+  // Load moderated visitor comments for this post
+  useEffect(() => {
+    if (!db || !post?.id || post.id === '1') return;
+    const loadComments = async () => {
+      try {
+        const q = query(collection(db, 'blog_posts', post.id, 'comments'), where('approved', '==', true));
+        const snapshot = await getDocs(q);
+        setApprovedComments(snapshot.docs.map(toDisplayComment).sort((a, b) => a.created_ms - b.created_ms));
+      } catch (e) {
+        console.error("Error loading comments:", e);
+      }
+    };
+    loadComments();
+  }, [post?.id]);
 
   // Track view increment
   useEffect(() => {
@@ -89,9 +133,9 @@ export default function BlogPost() {
       
       await addDoc(collection(db, 'notifications'), {
         type: 'like',
-        postTitle: post.title,
-        postSlug: post.slug,
-        message: `Someone liked your post "${post.title}"`,
+        postTitle: truncate(post.title || '', 190),
+        postSlug: truncate(post.slug || '', 190),
+        message: truncate(`Someone liked your post "${post.title}"`, 390),
         read: false,
         created_at: serverTimestamp()
       });
@@ -122,47 +166,36 @@ export default function BlogPost() {
 
   const handleSubmitComment = async (e) => {
     e.preventDefault();
-    if (!commentName.trim() || !commentText.trim() || !post || post.id === '1') return;
+    const name = commentName.trim();
+    const text = commentText.trim();
+    if (!name || !text || !post || post.id === '1') return;
 
     setIsSubmittingComment(true);
+    setCommentStatus(null);
     try {
-      const newComment = {
-        id: `c-${Date.now()}`,
-        name: commentName.trim(),
-        avatar: commentName.trim().charAt(0).toUpperCase(),
-        comment: commentText.trim(),
-        date: new Date().toLocaleString('en-US', {
-          month: 'short',
-          day: 'numeric',
-          year: 'numeric',
-          hour: 'numeric',
-          minute: '2-digit',
-          hour12: true
-        }),
-        pinned: false,
-        featured: false,
-        replies: []
-      };
-
-      const docRef = doc(db, 'blog_posts', post.id);
-      const updatedComments = [...(post.comments || []), newComment];
-      
-      await updateDoc(docRef, { comments: updatedComments });
-
-      await addDoc(collection(db, 'notifications'), {
-        type: 'comment',
-        postTitle: post.title,
-        postSlug: post.slug,
-        message: `${commentName.trim()} commented on "${post.title}": "${commentText.trim().substring(0, 45)}..."`,
-        read: false,
+      // Held for moderation; the admin approves it from the blog editor.
+      await addDoc(collection(db, 'blog_posts', post.id, 'comments'), {
+        name: truncate(name, 80),
+        comment: truncate(text, 1000),
+        approved: false,
         created_at: serverTimestamp()
       });
 
-      setPost(prev => ({ ...prev, comments: updatedComments }));
+      await addDoc(collection(db, 'notifications'), {
+        type: 'comment',
+        postTitle: truncate(post.title || '', 190),
+        postSlug: truncate(post.slug || '', 190),
+        message: truncate(`${name} commented on "${post.title}": "${truncate(text, 45)}"`, 390),
+        read: false,
+        created_at: serverTimestamp()
+      }).catch(err => console.error("Error creating comment notification:", err));
+
+      setCommentStatus('pending');
       setCommentText('');
       setCommentName('');
     } catch (err) {
       console.error("Error submitting comment:", err);
+      setCommentStatus('error');
     } finally {
       setIsSubmittingComment(false);
     }
@@ -205,7 +238,7 @@ export default function BlogPost() {
     );
   }
 
-  const sortedComments = [...(post.comments || [])].sort((a, b) => {
+  const sortedComments = [...(post.comments || []), ...approvedComments].sort((a, b) => {
     if (a.pinned && !b.pinned) return -1;
     if (!a.pinned && b.pinned) return 1;
     return 0;
@@ -367,7 +400,7 @@ export default function BlogPost() {
             <div className="space-y-8 border-t border-line/60 pt-12">
               <h3 className="text-xl md:text-2xl font-display font-bold text-ink flex items-center gap-2">
                 <MessageSquare className="text-accent" size={20} />
-                <span>Comments ({post.comments?.length || 0})</span>
+                <span>Comments ({sortedComments.length})</span>
               </h3>
 
               {/* Submit Comment */}
@@ -378,6 +411,7 @@ export default function BlogPost() {
                     required
                     type="text"
                     placeholder="Your Name"
+                    maxLength={80}
                     value={commentName}
                     onChange={(e) => setCommentName(e.target.value)}
                     className="w-full bg-bg border border-line rounded-lg px-4 py-2 text-sm text-ink focus:outline-none focus:border-accent transition-colors"
@@ -386,6 +420,7 @@ export default function BlogPost() {
                     required
                     rows={3}
                     placeholder="What are your thoughts?"
+                    maxLength={1000}
                     value={commentText}
                     onChange={(e) => setCommentText(e.target.value)}
                     className="w-full bg-bg border border-line rounded-lg px-4 py-2.5 text-sm text-ink focus:outline-none focus:border-accent transition-colors resize-none"
@@ -397,6 +432,12 @@ export default function BlogPost() {
                   >
                     {isSubmittingComment ? 'Submitting...' : 'Post comment'}
                   </button>
+                  {commentStatus === 'pending' && (
+                    <p role="status" className="text-xs text-accent">Thanks! Your comment will appear once it's approved.</p>
+                  )}
+                  {commentStatus === 'error' && (
+                    <p role="alert" className="text-xs text-red-400">Couldn't post your comment. Please try again later.</p>
+                  )}
                 </form>
               )}
 

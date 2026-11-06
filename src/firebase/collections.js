@@ -1,4 +1,4 @@
-import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, serverTimestamp, query, where } from 'firebase/firestore';
 import { db } from './config';
 
 // Ensure db is defined before calling firestore functions, 
@@ -31,10 +31,11 @@ export const getProjects = async () => {
 export const getPublishedPosts = async () => {
  if (!db) return [];
  try {
- const querySnapshot = await getDocs(collection(db, 'blog_posts'));
+ // Firestore rules aren't filters: an unfiltered query fails for visitors.
+ const q = query(collection(db, 'blog_posts'), where('published', '==', true));
+ const querySnapshot = await getDocs(q);
  const docs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
  return docs
-  .filter(doc => doc.published === true)
   .sort((a, b) => {
   const tA = a.created_at?.toMillis ? a.created_at.toMillis() : 0;
   const tB = b.created_at?.toMillis ? b.created_at.toMillis() : 0;
@@ -73,10 +74,11 @@ export const getTimeline = async () => {
 export const getApprovedGuestbook = async () => {
  if (!db) return [];
  try {
- const querySnapshot = await getDocs(collection(db, 'guestbook'));
+ // Firestore rules aren't filters: an unfiltered query fails for visitors.
+ const q = query(collection(db, 'guestbook'), where('approved', '==', true));
+ const querySnapshot = await getDocs(q);
  const docs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
  return docs
-  .filter(doc => doc.approved === true)
   .sort((a, b) => {
   const tA = a.created_at?.toMillis ? a.created_at.toMillis() : 0;
   const tB = b.created_at?.toMillis ? b.created_at.toMillis() : 0;
@@ -91,10 +93,11 @@ export const getApprovedGuestbook = async () => {
 export const getPendingGuestbook = async () => {
  if (!db) return [];
  try {
- const querySnapshot = await getDocs(collection(db, 'guestbook'));
+ // Firestore rules aren't filters: an unfiltered query fails for visitors.
+ const q = query(collection(db, 'guestbook'), where('approved', '==', false));
+ const querySnapshot = await getDocs(q);
  const docs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
  return docs
-  .filter(doc => doc.approved === false)
   .sort((a, b) => {
   const tA = a.created_at?.toMillis ? a.created_at.toMillis() : 0;
   const tB = b.created_at?.toMillis ? b.created_at.toMillis() : 0;

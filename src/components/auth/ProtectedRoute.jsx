@@ -4,7 +4,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { Loader2 } from 'lucide-react';
 
 export const ProtectedRoute = ({ children }) => {
- const { user, loading } = useAuth();
+ const { user, isAdmin, loading, logout } = useAuth();
 
  if (loading) {
  return (
@@ -16,6 +16,15 @@ export const ProtectedRoute = ({ children }) => {
 
  if (!user) {
  return <Navigate to="/admin/login" replace />;
+ }
+
+ if (!isAdmin) {
+ return (
+  <div className="min-h-screen bg-bg flex flex-col items-center justify-center gap-4 px-4 text-center">
+  <p className="text-ink">This account doesn't have admin access.</p>
+  <button onClick={logout} className="text-sm text-accent hover:text-accent-light">Sign out</button>
+  </div>
+ );
  }
 
  return children;
